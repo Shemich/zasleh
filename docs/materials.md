@@ -16,7 +16,7 @@ there for the viewport.
 
 **An ordinary 3ds Max material** (Standard, Physical, inside a Multi/Sub-Object or not) gets its
 paths worked out on export: the texture from the file in the colour slot, made relative to *Tex root*
-and given the `.paa` extension; the `.rvmat`, if you ask for one, next to it.
+(see [Settings](settings.md)) and given the `.paa` extension; the `.rvmat`, if you ask for one, next to it.
 
 ## The table
 

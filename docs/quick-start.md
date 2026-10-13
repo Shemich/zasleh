@@ -7,9 +7,9 @@ nav_order: 3
 
 ## Open a model
 
-1. **Model** tab. Set *Tex root* to your project drive (usually `P:\`): texture paths in a p3d are
-   relative to it.
-2. **Import p3d...** and pick an editable p3d.
+1. **Settings** at the bottom of the panel: set *Tex root* to your project drive (usually `P:\`).
+   Texture paths in a p3d are relative to it.
+2. **Model** tab, **Import p3d...**, pick an editable p3d.
 
 Every LOD of the model is now a layer named after the LOD: `1`, `2`, `Geometry`, `Memory`...
 Double click a layer in the list to see that LOD alone.

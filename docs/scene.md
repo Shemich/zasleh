@@ -1,6 +1,6 @@
 ---
 title: How a p3d is kept in the scene
-nav_order: 10
+nav_order: 12
 ---
 
 # How a p3d is kept in the scene

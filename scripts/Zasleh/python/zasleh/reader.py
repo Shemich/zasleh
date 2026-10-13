@@ -284,7 +284,8 @@ def read_layer(layer, registry: Optional[reg.Registry] = None,
     nodes = list(rt.zaslehLayerNodes(layer))
     helpers = [node for node in nodes if rt.classOf(node) == rt.Point]
     meshes = [_Mesh(node, registry, textures) for node in nodes
-              if rt.superClassOf(node) == rt.GeometryClass and rt.classOf(node) != rt.Targetobject]
+              if rt.superClassOf(node) == rt.GeometryClass and rt.classOf(node) != rt.Targetobject
+              and user_prop(node, "display") is None]              # not what is only drawn for the eye
     ngons = ["%s (%d)" % (mesh.name, mesh.ngons) for mesh in meshes if mesh.ngons]
     if ngons:
         raise SceneError("layer \"%s\": polygons with more than 4 corners in %s could not be cut into "

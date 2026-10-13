@@ -15,9 +15,13 @@ def check(name, condition, detail=None):
     out["checks"][name] = bool(condition) if detail is None else [bool(condition), detail]
 
 
+SETTINGS_BEFORE = {}        # put back whatever happens
 try:
     sys.path.insert(0, os.path.join(str(rt.getDir(rt.Name("scripts"))), "Zasleh", "python"))
     from zasleh import formats
+    from zasleh import settings as all_settings
+    SETTINGS_BEFORE.update((key, all_settings.get(key)) for key in
+                         ("texRoot", "gameRoot", "debinarizer", "imageToPaa", "texConv", "nameSet", "rvmatPreset"))
     from zasleh.formats import LOD, P3D, Face
     import zasleh.ui as ui
     from PySide2 import QtCore
@@ -25,7 +29,7 @@ try:
     rt.resetMaxFile(rt.Name("noPrompt"))
     panel = ui.show()
     check("the panel opens with its tabs", panel.isVisible() and
-          [panel.tabs.tabText(i) for i in range(panel.tabs.count())] == ["Model", "Selections", "Memory", "Materials", "Config", "Multi"])
+          [panel.tabs.tabText(i) for i in range(panel.tabs.count())] == ["Model", "Selections", "Memory", "Hit points", "Materials", "Config", "Multi"])
     check("opening it again gives the same panel", ui.show() is panel)
 
     # -- Selections
@@ -247,17 +251,18 @@ try:
     tool = os.path.join(work, "tool.bat")
     with open(tool, "w") as stream:
         stream.write('@echo off\ncopy /y "%~dp0proxied.p3d" "%~2\\in.p3d" >nul\n')
-    kept_tool = tab.debinarizer.text()
-    tab.debinarizer.edit.setText("")
+    from zasleh import settings as path_settings
+    kept_tool = path_settings.get("debinarizer")
+    path_settings.put("debinarizer", "")
     rt.resetMaxFile(rt.Name("noPrompt"))
     panel.log.clear()
     check("a binarized model without a debinarizer: said in the log",
           not tab.import_file(binarized) and "set the path of a debinarizer" in panel.log.toPlainText(), panel.log.toPlainText())
-    tab.debinarizer.edit.setText(tool)
+    path_settings.put("debinarizer", tool)
     check("a binarized model is converted and imported under its own name",
           tab.import_file(binarized) and "made editable by tool.bat" in panel.log.toPlainText() and
           "in_1" in [str(n.name) for n in rt.objects], [panel.log.toPlainText(), [str(n.name) for n in rt.objects]])
-    tab.debinarizer.edit.setText(kept_tool)
+    path_settings.put("debinarizer", kept_tool)
     tab.split_proxies.setChecked(kept_split[0])
     tab.split_names.setText(kept_split[1])
     tab.split_names.editingFinished.emit()
@@ -424,6 +429,85 @@ try:
     except memory.MemoryError_:
         check("memory: at verts with nothing picked is refused", True)
 
+    # -- Hit points: a cloud inside an object is one selection; radius per selection, drawn as spheres
+    from zasleh import hitpoints
+    rt.resetMaxFile(rt.Name("noPrompt"))
+    tab = panel.hitpoints
+    panel.tabs.setCurrentWidget(tab)
+    panel.log.clear()
+    rack = rt.Box(length=1.0, width=2.0, height=1.0, name="int_ammo_hit", pos=rt.Point3(10, 0, 0))
+    rack.rotation = rt.EulerAngles(0, 0, 30)
+    rt.select(rack)
+    for box, value in zip(tab.spacing, (0.5, 0.5, 0.5)):
+        box.setValue(value)
+    made = tab.fill()
+    clouds = [n for n in rt.objects if str(n.layer.name) == "HitPoints"]
+    check("hit points: a turned 2 x 1 x 1 box takes 4 x 2 x 2 points, as one object on the HitPoints layer named after it",
+          made == 16 and len(clouds) == 1 and str(clouds[0].name) == "int_ammo_hit" and
+          rt.classOf(clouds[0]) == rt.Editable_Poly and tab.rows() == [("int_ammo_hit", "16", "")], [made, tab.rows()])
+    middle = [sum(float(rt.polyop.getVert(clouds[0], v)[axis]) for v in range(1, 49)) / 48.0 for axis in range(3)]
+    check("hit points: the cloud sits in the middle of the object, on its own axes",
+          all(abs(middle[axis] - float(rack.center[axis])) < 1e-3 for axis in range(3)), middle)
+    tab.name.setText("engine_hit")
+    for box in tab.spacing:
+        box.setValue(0.1)
+    made = tab.fill()
+    check("hit points: 2000 points are one more object, not 2000 helpers; the typed name wins over the object's",
+          made == 2000 and len([n for n in rt.objects if str(n.layer.name) == "HitPoints"]) == 2 and
+          tab.rows() == [("engine_hit", "2000", ""), ("int_ammo_hit", "16", "")], [made, tab.rows()])
+    sheet = rt.convertToPoly(rt.Plane(length=1, width=1, name="open_sheet", pos=rt.Point3(20, 0, 0)))
+    rt.select(sheet)
+    check("hit points: an object that encloses nothing gives no points and says so",
+          tab.fill() == 0 and "is it closed" in panel.log.toPlainText())
+    rt.delete(sheet)
+
+    tab.table.selectRow(1)
+    tab.radius.setValue(0.15)
+    tab.set_radius()
+    tab.show_button.setChecked(True)
+    drawn = [n for n in rt.objects if rt.getUserProp(n, "zasleh_display") is not None]
+    check("hit points: radius of a selection, drawn as a sphere around each of its points",
+          tab.rows()[1] == ("int_ammo_hit", "16", "0.15") and len(drawn) == 1 and int(drawn[0].numfaces) == 16 * 32 and
+          bool(drawn[0].isFrozen) and "16 sphere(s) drawn" in panel.log.toPlainText(), [tab.rows()[1], len(drawn)])
+    with open(os.path.join(os.environ["ZASLEH_TMP"], "zasleh_hit_config.cpp"), "w") as stream:
+        stream.write('class HitPoints { class HitHull: HitHull { armor = -190; name = "int_ammo_hit"; '
+                     'visual = "dmg_hull"; radius = 0.25; }; class HitGun { name = "gun_hit"; radius = 1; }; };')
+    done = tab.load_radii(os.path.join(os.environ["ZASLEH_TMP"], "zasleh_hit_config.cpp"))
+    os.remove(os.path.join(os.environ["ZASLEH_TMP"], "zasleh_hit_config.cpp"))
+    drawn = [n for n in rt.objects if rt.getUserProp(n, "zasleh_display") is not None]
+    box_size = drawn[0].max - drawn[0].min if drawn else None
+    check("hit points: radius from the classes of a config; what is drawn follows",
+          done == ["int_ammo_hit"] and tab.rows()[1][2] == "0.25" and len(drawn) == 1 and
+          hitpoints.radii() == {"int_ammo_hit": 0.25}, [done, tab.rows()[1], hitpoints.radii()])
+    tab.table.clearSelection()
+    tab.radius.setValue(0.05)
+    tab.set_radius()
+    drawn = [n for n in rt.objects if rt.getUserProp(n, "zasleh_display") is not None]
+    check("hit points: a radius for all the other points", tab.rows()[-1] == ("(all other points)", "", "0.05") and
+          len(drawn) == 1 and int(drawn[0].numfaces) == 2016 * 32, [tab.rows()[-1], int(drawn[0].numfaces) if drawn else 0])
+    from zasleh import exporter as hit_exporter
+    built = hit_exporter.build_model(["HitPoints"])[0].lods[0]
+    check("hit points: the p3d gets the 2016 points and the two selections, nothing of the spheres",
+          len(built.points) == 2016 and not built.faces and
+          sorted((s.name, len(s.weights) - s.weights.count(0)) for s in built.selections) ==
+          [("engine_hit", 2000), ("int_ammo_hit", 16)], [len(built.points), len(built.faces)])
+    tab.show_button.setChecked(False)
+    check("hit points: hidden again", not [n for n in rt.objects if rt.getUserProp(n, "zasleh_display") is not None])
+
+    # -- Settings: the paths live in one dialog
+    from zasleh.ui.settings_dialog import SettingsDialog
+    dialog = SettingsDialog(panel)
+    dialog.rows["debinarizer"].edit.setText("D:\\tools\\debin.exe")
+    dialog.rows["debinarizer"].edit.editingFinished.emit()
+    dialog.rows["texConv"].edit.setText("  D:\\tools\\texconv.exe ")
+    dialog.accept()
+    check("settings: tex root, game data, debinarizer, ImageToPAA and texconv in one dialog, kept as typed",
+          sorted(dialog.rows) == ["debinarizer", "gameRoot", "imageToPaa", "texConv", "texRoot"] and
+          all_settings.get("debinarizer") == "D:\\tools\\debin.exe" and all_settings.get("texConv") == "D:\\tools\\texconv.exe" and
+          panel.model.options().tex_conv == "D:\\tools\\texconv.exe", [all_settings.get("debinarizer"), all_settings.get("texConv")])
+    for key in ("debinarizer", "texConv"):
+        all_settings.put(key, SETTINGS_BEFORE[key])
+
     # -- Materials
     rt.resetMaxFile(rt.Name("noPrompt"))
     tab = panel.materials
@@ -453,7 +537,8 @@ try:
     with_material("lost", "root\\data\\gone_co.png", x=80.0)
     with_material("bare", x=120.0)
     with_material("far", "elsewhere\\far_co.png", x=160.0)
-    tab.root.edit.setText(os.path.join(work, "root"))
+    kept_root = path_settings.get("texRoot")
+    path_settings.put("texRoot", os.path.join(work, "root"))
     panel.tabs.setCurrentWidget(tab)
     check("materials: what each one lacks", dict(tab.statuses()) == {
         "whole": "OK", "colour_only": "no nohq/smdi", "lost": "file missing", "bare": "no _co", "far": "outside root"}, tab.statuses())
@@ -531,6 +616,7 @@ try:
     tab.table.selectRow(rows.index("bare"))
     check("materials: Automatic takes the paths away again", tab.clear_paths() == 1 and
           dict(tab.statuses())["bare"] == "no _co" and exporter.Textures()(bare, 1) == ("", ""), tab.statuses())
+    path_settings.put("texRoot", kept_root)
     shutil.rmtree(work, ignore_errors=True)
 
     # -- Config: bones from the scene, an animation, model.cfg out and in again
@@ -672,5 +758,8 @@ except Exception as error:  # noqa: BLE001
     out["ok"] = False
     out["error"] = "%s: %s" % (type(error).__name__, error)
     out["trace"] = traceback.format_exc()
+finally:
+    for key, value in SETTINGS_BEFORE.items():
+        all_settings.put(key, value)
 with open(os.environ["ZASLEH_OUT"], "w", encoding="utf-8") as stream:
     json.dump(out, stream, indent=1, default=str)

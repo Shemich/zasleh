@@ -20,6 +20,7 @@ materials and `.rvmat`, `model.cfg`. What you used to open Object Builder for, d
 - **LODs as layers**, with their named properties. Proxies, wheels or turrets as separate objects if you like.
 - **model.cfg**: skeleton, sections, animations; existing files are read with their inheritance.
 - **Fast.** A 145 MB tank with 11 LODs: about 6 seconds in, about 7 out.
+- **Hit points.** A cloud of points inside any closed object, thousands if need be; the reach of each hit point drawn as a sphere.
 - Binarized models through a debinarizer of your choice. Multi-structure buildings.
 
 ## Install

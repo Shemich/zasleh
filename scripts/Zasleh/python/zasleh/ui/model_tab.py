@@ -13,34 +13,6 @@ rt = pymxs.runtime
 P3D_FILTER = "Arma p3d (*.p3d)"
 
 
-class PathRow(QtWidgets.QWidget):
-    def __init__(self, key: str, caption: str, pick_folder: bool, tip: str):
-        super().__init__()
-        self.key, self.caption, self.pick_folder = key, caption, pick_folder
-        self.edit = QtWidgets.QLineEdit(settings.get(key))
-        self.edit.setToolTip(tip)
-        self.edit.editingFinished.connect(lambda: settings.put(key, self.edit.text()))
-        browse = QtWidgets.QToolButton()
-        browse.setText("...")
-        browse.clicked.connect(self.browse)
-        row = QtWidgets.QHBoxLayout(self)
-        row.setContentsMargins(0, 0, 0, 0)
-        row.addWidget(self.edit, 1)
-        row.addWidget(browse)
-
-    def text(self) -> str:
-        return self.edit.text().strip()
-
-    def browse(self) -> None:
-        if self.pick_folder:
-            path = QtWidgets.QFileDialog.getExistingDirectory(self, self.caption, self.text())
-        else:
-            path, _kind = QtWidgets.QFileDialog.getOpenFileName(self, self.caption, self.text(), "Programs (*.exe)")
-        if path:
-            self.edit.setText(os.path.normpath(path))
-            settings.put(self.key, self.edit.text())
-
-
 class ModelTab(QtWidgets.QWidget):
     def __init__(self, say):
         super().__init__()
@@ -52,10 +24,7 @@ class ModelTab(QtWidgets.QWidget):
         self.previews = QtWidgets.QCheckBox("Show .paa textures in the viewport")
         self.previews.setChecked(settings.flag("paaPreview"))
         self.previews.toggled.connect(lambda on: settings.put("paaPreview", "1" if on else "0"))
-        self.game_root = PathRow("gameRoot", "Unpacked game data", True,
-                                 "The folder that holds a3\\...: textures of the game are shown on imported models")
         game_form = QtWidgets.QFormLayout()
-        game_form.addRow("Game data", self.game_root)
         self.split_proxies = QtWidgets.QCheckBox("Proxies as separate objects")
         self.split_proxies.setToolTip("Every proxy triangle becomes an object named after the proxy. An export joins them again")
         self.split_proxies.setChecked(settings.flag("splitProxies", False))
@@ -66,10 +35,6 @@ class ModelTab(QtWidgets.QWidget):
                                     "A face goes with the first selection that has it. An export joins them again")
         self.split_names.editingFinished.connect(lambda: settings.put("splitNames", self.split_names.text()))
         game_form.addRow("Split off", self.split_names)
-        self.debinarizer = PathRow("debinarizer", "Debinarizer", False,
-                                   "A program that turns a binarized (ODOL) p3d into an editable one, called as\n"
-                                   "\"program inFolder outFolder\" (P3DDebinarizer does). Binarized models go through it on import")
-        game_form.addRow("Debinarizer", self.debinarizer)
         import_box = QtWidgets.QGroupBox("Import")
         box = QtWidgets.QVBoxLayout(import_box)
         box.addWidget(import_button)
@@ -90,30 +55,21 @@ class ModelTab(QtWidgets.QWidget):
                               "The shader is chosen in the Materials tab")
         self.deploy = QtWidgets.QCheckBox("Deploy textures to")
         self.deploy_dir = QtWidgets.QLineEdit(settings.get("deployDir", "data"))
-        self.deploy_dir.setToolTip("Folder next to the p3d, or a full path. Files already there are kept")
+        self.deploy_dir.setToolTip("Folder next to the p3d, or a full path. Files already there are kept.\n"
+                                   "Needs ImageToPAA (Settings) to convert to .paa")
         self.deploy_dir.editingFinished.connect(lambda: settings.put("deployDir", self.deploy_dir.text()))
-        self.tex_root = PathRow("texRoot", "Texture root", True, "Texture paths are written relative to this folder, e.g. P:\\")
-        if not self.tex_root.text():
-            self.tex_root.edit.setText(settings.default_texture_root())
-        self.image_to_paa = PathRow("imageToPaa", "ImageToPAA.exe", False, "Converts textures to .paa when deploying")
-        self.tex_conv = PathRow("texConv", "texconv.exe", False, "For .dds sources")
         export_button = QtWidgets.QPushButton("Export p3d...")
         export_button.clicked.connect(self.pick_export)
 
         deploy_row = QtWidgets.QHBoxLayout()
         deploy_row.addWidget(self.deploy)
         deploy_row.addWidget(self.deploy_dir, 1)
-        form = QtWidgets.QFormLayout()
-        form.addRow("Tex root", self.tex_root)
-        form.addRow("ImageToPAA", self.image_to_paa)
-        form.addRow("Texconv", self.tex_conv)
         export_box = QtWidgets.QGroupBox("Export")
         box = QtWidgets.QVBoxLayout(export_box)
         box.addWidget(self.layers, 1)
         box.addWidget(self.paa)
         box.addWidget(self.rvmat)
         box.addLayout(deploy_row)
-        box.addLayout(form)
         box.addWidget(export_button)
 
         prep_box = QtWidgets.QGroupBox("Selected objects")
@@ -236,11 +192,11 @@ class ModelTab(QtWidgets.QWidget):
                 if self.layers.item(i).checkState() == QtCore.Qt.Checked]
 
     def options(self) -> exporter.Options:
-        return exporter.Options(convert_paa=self.paa.isChecked(), tex_root=self.tex_root.text(),
+        return exporter.Options(convert_paa=self.paa.isChecked(), tex_root=settings.default_texture_root(),
                                 gen_rvmat=self.rvmat.isChecked(), rvmat_preset=settings.get("rvmatPreset", "Super"),
                                 deploy=self.deploy.isChecked(),
                                 deploy_dir=self.deploy_dir.text().strip() or "data",
-                                image_to_paa=self.image_to_paa.text(), tex_conv=self.tex_conv.text())
+                                image_to_paa=settings.get("imageToPaa"), tex_conv=settings.get("texConv"))
 
     def import_file(self, path: str) -> bool:
         patterns = parts.patterns_of(self.split_names.text(), self.split_proxies.isChecked())
@@ -249,7 +205,7 @@ class ModelTab(QtWidgets.QWidget):
         try:
             binarized = odol.is_odol(path)
             if binarized:
-                path = odol.to_mlod(path, self.debinarizer.text(), work)
+                path = odol.to_mlod(path, settings.get("debinarizer"), work)
             report = importer.import_p3d(path)
         except (formats.P3DError, OSError) as error:
             self.say("Import failed: %s" % error)
@@ -259,7 +215,7 @@ class ModelTab(QtWidgets.QWidget):
                 shutil.rmtree(work, ignore_errors=True)
         if binarized:
             self.say("A binarized model, made editable by %s: what the game has no use for (sharp edges, "
-                     "some selections, exact masses) does not come back" % os.path.basename(self.debinarizer.text()))
+                     "some selections, exact masses) does not come back" % os.path.basename(settings.get("debinarizer")))
         made = parts.split_scene(patterns, [info["layer"] for info in report["lods"]])
         rt.redrawViews()
         self.say(importer.summary(report))

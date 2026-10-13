@@ -19,6 +19,7 @@ memory points, mass, face textures and `.rvmat` paths, LOD properties, `model.cf
 - **Name sets**: what a tank, a car or a house is usually cut into, ready to assign.
 - **Textures and materials per selection**, and `.rvmat` files written for you.
 - **`.paa` textures in the viewport.**
+- **Hit points**: a cloud of points inside any closed object, and the reach of every hit point drawn as a sphere.
 - **`model.cfg`**: skeleton, sections and animations in a table; an existing file is read with its inheritance.
 - **Big models**: a 145 MB tank with 11 LODs imports in about 6 seconds and exports in about 7.
 
@@ -27,7 +28,7 @@ memory points, mass, face textures and `.rvmat` paths, LOD properties, `model.cf
 1. [Installation](installation.md)
 2. [Quick start](quick-start.md)
 3. The tabs: [Model](model.md), [Selections](selections.md), [Materials](materials.md),
-   [Memory](memory.md), [Config](config.md), [Multi](multi.md)
+   [Memory](memory.md), [Hit points](hitpoints.md), [Config](config.md), [Multi](multi.md); [Settings](settings.md)
 4. [How a p3d is kept in the scene](scene.md) and the [limits](limits.md)
 
 Tested with 3ds Max 2024.

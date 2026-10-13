@@ -6,7 +6,6 @@ from PySide2 import QtCore, QtGui, QtWidgets
 from zasleh.formats import rvmat
 
 from .. import materials, settings
-from .model_tab import PathRow
 
 rt = pymxs.runtime
 COLUMNS = ("Material", "Type", "Colour map", "N", "S", "Status")
@@ -27,9 +26,6 @@ class MaterialsTab(QtWidgets.QWidget):
         self.say = say
         self.found = []             # materials, one per table row
 
-        self.root = PathRow("texRoot", "Texture root", True, "Your project's texture root, e.g. P:\\")
-        if not self.root.text():
-            self.root.edit.setText(settings.default_texture_root())
         self.selected_only = QtWidgets.QCheckBox("Selected objects only")
         self.selected_only.toggled.connect(lambda _on: self.scan())
         top = QtWidgets.QHBoxLayout()
@@ -83,10 +79,7 @@ class MaterialsTab(QtWidgets.QWidget):
         buttons.addWidget(_button("Replace in all", lambda: self.replace(True), "In the texture paths of every listed material"))
         buttons.addWidget(_button("Select objects", self.select_objects, "Select the objects that use the picked materials"))
 
-        form = QtWidgets.QFormLayout()
-        form.addRow("Tex root", self.root)
         layout = QtWidgets.QVBoxLayout(self)
-        layout.addLayout(form)
         layout.addLayout(top)
         layout.addWidget(self.table, 1)
         layout.addLayout(maps)
@@ -103,7 +96,7 @@ class MaterialsTab(QtWidgets.QWidget):
         self.table.blockSignals(True)
         self.table.setRowCount(0)
         for material in self.found:
-            row = materials.describe(material, self.root.text())
+            row = materials.describe(material, settings.default_texture_root())
             at = self.table.rowCount()
             self.table.insertRow(at)
             cells = (row["name"], row["type"], os.path.basename(row["diffuse"].replace("\\", "/")),
@@ -135,7 +128,7 @@ class MaterialsTab(QtWidgets.QWidget):
         """The paths of the first picked material: its own, or greyed what its maps give"""
         chosen = self.picked()
         own = materials.arma_attributes(chosen[0]) if chosen else None
-        auto = materials.derived(chosen[0], self.root.text()) if chosen and own is None else ("", "")
+        auto = materials.derived(chosen[0], settings.default_texture_root()) if chosen and own is None else ("", "")
         for edit, value, hint in ((self.texture, own[0] if own else "", auto[0] and "from the maps: " + auto[0]),
                                   (self.rvmat, own[1] if own else "", auto[1] and "with Generate .rvmat: " + auto[1])):
             edit.setText(value)
@@ -182,7 +175,7 @@ class MaterialsTab(QtWidgets.QWidget):
         there = sum(1 for _material, path in materials.rvmat_files(chosen) if os.path.isfile(path))
         replace = bool(there) and self.confirm("%d .rvmat file(s) are there already. Replace them?\n"
                                                "No keeps them as they are." % there)
-        done = materials.generate_rvmats(chosen, self.preset.currentText(), self.root.text(), replace)
+        done = materials.generate_rvmats(chosen, self.preset.currentText(), settings.default_texture_root(), replace)
         left = ", %d material(s) left out (no colour map, or paths of their own)" % done["skipped"] if done["skipped"] else ""
         self.say("Materials: %d .rvmat written (%s), %d kept%s" % (done["written"], self.preset.currentText(), done["kept"], left))
         for note in done["notes"]:

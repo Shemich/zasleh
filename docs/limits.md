@@ -1,12 +1,12 @@
 ---
 title: Limits
-nav_order: 11
+nav_order: 13
 ---
 
 # Limits
 
 - **Editable p3d only.** Zasleh does not read binarized (ODOL) models itself; it can pass them
-  through a debinarizer you have (Model tab). What binarization threw away does not come back.
+  through a debinarizer you have (Settings). What binarization threw away does not come back.
 - **Undo.** 3ds Max keeps no undo record for map channels, so Ctrl+Z does not undo what the
   Selections tab does. The tab has its own **Undo**; there is no redo.
 - **Smoothing groups** are 32 bits per face. Where more than 32 separately smoothed surfaces meet in

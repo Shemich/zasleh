@@ -3,11 +3,13 @@ from PySide2 import QtCore, QtWidgets
 from .. import __version__
 
 from .config_tab import ConfigTab
+from .hitpoints_tab import HitPointsTab
 from .materials_tab import MaterialsTab
 from .memory_tab import MemoryTab
 from .model_tab import ModelTab
 from .multi_tab import MultiTab
 from .selections_tab import SelectionsTab
+from .settings_dialog import SettingsDialog
 
 ABOUT = "Zasleh %s: Arma 3 p3d tools for 3ds Max" % __version__
 
@@ -21,6 +23,7 @@ class Panel(QtWidgets.QDockWidget):
         self.model = ModelTab(self.say)
         self.selections = SelectionsTab(self.say)
         self.memory = MemoryTab(self.say)
+        self.hitpoints = HitPointsTab(self.say)
         self.materials = MaterialsTab(self.say)
         self.config = ConfigTab(self.say)
         self.multi = MultiTab(self.say, self.model.options)
@@ -28,6 +31,7 @@ class Panel(QtWidgets.QDockWidget):
         self.tabs.addTab(self.model, "Model")
         self.tabs.addTab(self.selections, "Selections")
         self.tabs.addTab(self.memory, "Memory")
+        self.tabs.addTab(self.hitpoints, "Hit points")
         self.tabs.addTab(self.materials, "Materials")
         self.tabs.addTab(self.config, "Config")
         self.tabs.addTab(self.multi, "Multi")
@@ -47,9 +51,14 @@ class Panel(QtWidgets.QDockWidget):
         self.last = QtWidgets.QLabel(ABOUT)
         self.last.setToolTip(ABOUT)
         self.last.setSizePolicy(QtWidgets.QSizePolicy.Ignored, QtWidgets.QSizePolicy.Preferred)
+        settings_button = QtWidgets.QToolButton()
+        settings_button.setText("Settings")
+        settings_button.setToolTip("Tex root, game data, debinarizer, ImageToPAA, texconv")
+        settings_button.clicked.connect(lambda _checked=False: self.open_settings())
         bar = QtWidgets.QHBoxLayout()
         bar.addWidget(self.log_toggle)
         bar.addWidget(self.last, 1)
+        bar.addWidget(settings_button)
 
         body = QtWidgets.QWidget()
         layout = QtWidgets.QVBoxLayout(body)
@@ -74,6 +83,10 @@ class Panel(QtWidgets.QDockWidget):
             self.last.setToolTip(text)
         if len(lines) > 1:                  # a report: worth seeing whole
             self.log_toggle.setChecked(True)
+
+    def open_settings(self) -> None:
+        SettingsDialog(self).exec_()
+        self.refresh()
 
     def refresh(self) -> None:
         self.tabs.currentWidget().refresh()

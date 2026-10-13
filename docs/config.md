@@ -1,6 +1,6 @@
 ---
 title: Config
-nav_order: 8
+nav_order: 9
 ---
 
 # Config tab

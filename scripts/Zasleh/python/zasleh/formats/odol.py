@@ -18,7 +18,7 @@ def to_mlod(path: str, tool: str, work: str, timeout: int = 600) -> str:
     """Run the debinarizer (called as "tool inFolder outFolder") on a copy of the file.
     Gives the editable p3d: same file name, inside the work folder, which is emptied first."""
     if not tool or not os.path.isfile(tool):
-        raise P3DError("this is a binarized (ODOL) model: set the path of a debinarizer to have it converted on import")
+        raise P3DError("this is a binarized (ODOL) model: set the path of a debinarizer (Settings) to have it converted on import")
     name = os.path.basename(path)
     source, target = os.path.join(work, "in"), os.path.join(work, "out")
     for folder in (source, target):
