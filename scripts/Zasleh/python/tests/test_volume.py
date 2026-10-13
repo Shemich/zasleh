@@ -1,3 +1,4 @@
+import math
 import unittest
 
 from zasleh import volume
@@ -65,6 +66,56 @@ class FillTest(unittest.TestCase):
 
     def test_nothing(self):
         self.assertEqual(volume.fill([], (1, 1, 1)), ([], 0))
+
+
+def turned(points, degrees):
+    """Points turned about the z axis"""
+    c, s = math.cos(math.radians(degrees)), math.sin(math.radians(degrees))
+    return [(x * c - y * s, x * s + y * c, z) for x, y, z in points]
+
+
+def box_mesh(low, high, degrees=0.0, first=0):
+    """(verts, faces) of a box, turned about z; faces count their verts from first"""
+    (x0, y0, z0), (x1, y1, z1) = low, high
+    verts = turned([(x, y, z) for x in (x0, x1) for y in (y0, y1) for z in (z0, z1)], degrees)
+    quads = [(0, 1, 3, 2), (4, 6, 7, 5), (0, 4, 5, 1), (2, 3, 7, 6), (0, 2, 6, 4), (1, 5, 7, 3)]
+    faces = [(a, b, d) for a, b, d, _e in quads] + [(a, d, e) for a, _b, d, e in quads]
+    return verts, [tuple(index + first for index in face) for face in faces]
+
+
+class PiecesTest(unittest.TestCase):
+    def test_boxes_that_overlap_are_filled_through(self):
+        shape = box((0, 0, 0), (2, 1, 1)) + box((1, 0, 0), (3, 1, 1))
+        points, skipped = volume.fill(shape, (1.0, 1.0, 1.0))
+        self.assertEqual(skipped, 0)
+        self.assertEqual(sorted(points), [(0.5, 0.5, 0.5), (1.5, 0.5, 0.5), (2.5, 0.5, 0.5)])
+
+    def test_a_box_gives_its_own_axes_however_it_is_turned(self):
+        verts, faces = box_mesh((0, 0, 0), (3, 2, 1), 30.0)
+        x_axis, y_axis, z_axis = volume.frame([tuple(verts[i] for i in face) for face in faces])
+        c, s = math.cos(math.radians(30)), math.sin(math.radians(30))
+        for got, wanted in ((x_axis, (c, s, 0.0)), (y_axis, (-s, c, 0.0)), (z_axis, (0.0, 0.0, 1.0))):
+            self.assertTrue(all(abs(a - b) < 0.02 for a, b in zip(got, wanted)), (got, wanted))
+
+    def test_every_piece_on_a_grid_of_its_own(self):
+        a_verts, a_faces = box_mesh((0, 0, 0), (1, 1, 1))
+        b_verts, b_faces = box_mesh((5, 0, 0), (7, 1, 1), 30.0, first=8)
+        points, skipped, pieces = volume.fill_elements(a_verts + b_verts, a_faces + b_faces, (0.5, 0.5, 0.5))
+        self.assertEqual((skipped, pieces, len(points)), (0, 2, 8 + 16))
+        # the turned box holds its 4 x 2 x 2 points evenly: their middle is the middle of the box
+        far = [p for p in points if p[0] > 2.0]
+        middle = [sum(p[i] for p in far) / len(far) for i in range(3)]
+        wanted = turned([(6.0, 0.5, 0.5)], 30.0)[0]
+        self.assertTrue(all(abs(a - b) < 1e-6 for a, b in zip(middle, wanted)), (middle, wanted))
+
+    def test_where_pieces_overlap_the_points_are_not_doubled(self):
+        a_verts, a_faces = box_mesh((0, 0, 0), (1, 1, 1))
+        b_verts, b_faces = box_mesh((0, 0, 0), (1, 1, 1), first=8)
+        points, _skipped, pieces = volume.fill_elements(a_verts + b_verts, a_faces + b_faces, (0.5, 0.5, 0.5))
+        self.assertEqual((pieces, len(points)), (2, 8))
+
+    def test_pieces_are_told_apart_by_shared_verts(self):
+        self.assertEqual(sorted(sorted(piece) for piece in volume.elements([(0, 1, 2), (2, 3, 4), (7, 8, 9)])), [[0, 1], [2]])
 
 
 class HitPointsTest(unittest.TestCase):

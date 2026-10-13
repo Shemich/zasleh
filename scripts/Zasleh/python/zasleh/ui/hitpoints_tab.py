@@ -36,14 +36,18 @@ class HitPointsTab(QtWidgets.QWidget):
             box.setToolTip("Distance between the points along %s of the object" % axis)
             cloud_row.addWidget(box)
         fill = QtWidgets.QPushButton("Fill object")
-        fill.setToolTip("Points on a grid inside the selected closed object, as one selection of the HitPoints LOD.\n"
-                        "The grid follows the object's own axes")
+        fill.setToolTip("Points on a grid inside the selected closed objects, as one selection of the HitPoints LOD")
         fill.clicked.connect(lambda _checked=False: self.fill())
         cloud_row.addWidget(fill)
+        self.pieces = QtWidgets.QCheckBox("Each piece on its own grid")
+        self.pieces.setChecked(True)
+        self.pieces.setToolTip("An object put together from several closed pieces: every piece is filled along its own sides,\n"
+                               "with the same room left on all of them. Off: one grid along the axes of the object")
         cloud_box = QtWidgets.QGroupBox("Point cloud")
         cloud = QtWidgets.QVBoxLayout(cloud_box)
         cloud.addWidget(self.name)
         cloud.addLayout(cloud_row)
+        cloud.addWidget(self.pieces)
 
         self.radius = QtWidgets.QDoubleSpinBox()
         self.radius.setRange(0.0, 100.0)
@@ -111,21 +115,26 @@ class HitPointsTab(QtWidgets.QWidget):
     def fill(self) -> int:
         sources = [node for node in rt.selection if rt.superClassOf(node) == rt.GeometryClass]
         try:
-            if len(sources) != 1:
-                raise hitpoints.HitPointError("Select one closed object to fill with points.")
-            source = sources[0]
-            found, skipped = hitpoints.cloud(source, [box.value() for box in self.spacing])
+            if not sources:
+                raise hitpoints.HitPointError("Select the closed object to fill with points.")
+            found, skipped, pieces = [], 0, 0
+            for source in sources:
+                inside, holes, count = hitpoints.cloud(source, [box.value() for box in self.spacing], self.pieces.isChecked())
+                found += inside
+                skipped += holes
+                pieces += count
+            what = str(sources[0].name) if len(sources) == 1 else "%d objects" % len(sources)
             if not found:
-                raise hitpoints.HitPointError("No grid point is inside %s: is it closed? Try a smaller spacing." % source.name)
+                raise hitpoints.HitPointError("No grid point is inside %s: is it closed? Try a smaller spacing." % what)
             if len(found) > ASK_FROM and not self.confirm("%d points would be made. Go on?" % len(found)):
                 return 0
-            name = self.name.text().strip() or str(source.name)
+            name = self.name.text().strip() or str(sources[0].name)
             hitpoints.make_cloud(found, name)
         except hitpoints.HitPointError as error:
             self.say("Hit points: %s" % error)
             return 0
-        note = "; %d line(s) of the grid skipped, the object is not closed there" % skipped if skipped else ""
-        self.say("Hit points: %d point(s) inside %s, selection %s%s" % (len(found), source.name, name, note))
+        note = "; %d line(s) of the grid skipped, the mesh is not closed there" % skipped if skipped else ""
+        self.say("Hit points: %d point(s) inside %s (%d piece(s)), selection %s%s" % (len(found), what, pieces, name, note))
         self.refresh()
         return len(found)
 

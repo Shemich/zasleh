@@ -455,6 +455,32 @@ try:
     check("hit points: 2000 points are one more object, not 2000 helpers; the typed name wins over the object's",
           made == 2000 and len([n for n in rt.objects if str(n.layer.name) == "HitPoints"]) == 2 and
           tab.rows() == [("engine_hit", "2000", ""), ("int_ammo_hit", "16", "")], [made, tab.rows()])
+    # an object put together from pieces: a box and, attached to it, another one turned and standing apart
+    block = rt.convertToPoly(rt.Box(length=1.0, width=1.0, height=1.0, name="engine", pos=rt.Point3(30, 0, 0)))
+    side = rt.Box(length=1.0, width=2.0, height=1.0, pos=rt.Point3(34, 0, 0))
+    side.rotation = rt.EulerAngles(0, 0, 30)
+    side_centre = (float(side.center.x), float(side.center.y), float(side.center.z))
+    rt.polyop.attach(block, rt.convertToPoly(side))
+    rt.select(block)
+    tab.name.setText("")
+    for box in tab.spacing:
+        box.setValue(0.5)
+    made = tab.fill()
+    engine = next(n for n in rt.objects if str(n.layer.name) == "HitPoints" and str(n.name) == "engine")
+    spots = [rt.polyop.getVert(engine, v) for v in range(1, int(rt.polyop.getNumVerts(engine)) + 1, 3)]
+    far = [p for p in spots if (float(p.x) - side_centre[0]) ** 2 + (float(p.y) - side_centre[1]) ** 2 < 1.6 ** 2]
+    middle = [sum(float(p[axis]) for p in far) / max(1, len(far)) for axis in range(3)]
+    check("hit points: every piece of an object gets a grid of its own, even on its turned sides",
+          made == 24 and len(far) == 16 and all(abs(middle[axis] - side_centre[axis]) < 1e-3 for axis in range(3)) and
+          "(2 piece(s))" in panel.log.toPlainText(), [made, len(far), middle, side_centre])
+    tab.pieces.setChecked(False)
+    made = tab.fill()
+    check("hit points: with that off there is one grid along the axes of the object", made > 0 and
+          "(1 piece(s))" in panel.log.toPlainText(), made)
+    tab.pieces.setChecked(True)
+    rt.delete([n for n in rt.objects if str(n.layer.name) == "HitPoints" and str(n.name) == "engine"])
+    rt.delete(block)
+    tab.refresh()
     sheet = rt.convertToPoly(rt.Plane(length=1, width=1, name="open_sheet", pos=rt.Point3(20, 0, 0)))
     rt.select(sheet)
     check("hit points: an object that encloses nothing gives no points and says so",

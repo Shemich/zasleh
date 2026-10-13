@@ -19,10 +19,16 @@ The table lists the selections of the LOD, the number of their points and their 
 The points land on the `HitPoints` layer as one object, named after the object you filled, and that
 name is their selection. Type another name in the field above the distances to use it instead.
 
-- The grid follows the object's own axes: a turned box is filled along its sides.
+- An object put together from several closed pieces (boxes and cylinders attached into one engine)
+  is filled piece by piece. Every piece gets a grid of its own, laid along its own sides, with the
+  same room left at both ends. So a slanted block is filled along its slant.
+- Pieces may overlap: the room two of them share is filled once.
+- Several selected objects are filled into one selection.
 - Points sit in the middle of the grid cells, never on the surface.
-- If the mesh has a hole, the grid lines running through it are skipped; the log says how many.
-- The object you filled is not changed and is not needed afterwards.
+- If a piece has a hole, the grid lines running through it are skipped; the log says how many.
+- The objects you filled are not changed and are not needed afterwards.
+
+Untick **Each piece on its own grid** to get one grid for the whole object, along the object's axes.
 
 The cloud is an ordinary Editable Poly made of points, so thousands of them are no problem, and the
 [Selections](selections.md) tab works on it: pick some of its vertices and assign them to another selection.

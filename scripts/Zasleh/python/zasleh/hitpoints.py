@@ -31,30 +31,36 @@ def layer(create: bool = False):
 
 # -- clouds
 
-def cloud(source, spacing) -> Tuple[List[tuple], int]:
-    """(world positions of grid points inside a closed object, lines given up where the mesh is open).
-    The grid follows the object's own axes; spacing (x, y, z) is in scene units."""
+def cloud(source, spacing, pieces: bool = True) -> Tuple[List[tuple], int, int]:
+    """(world positions of grid points inside a closed object, lines given up where the mesh is open, pieces).
+    pieces: every closed piece of the mesh gets a grid of its own, along its own sides; else there is one grid,
+    along the axes of the object. spacing (x, y, z) is in scene units."""
     if rt.superClassOf(source) != rt.GeometryClass:
         raise HitPointError("Select the closed object to fill with points.")
     transform = source.objectTransform
     back = rt.inverse(transform)
     scale = [float(rt.length(row)) or 1.0 for row in (transform.row1, transform.row2, transform.row3)]
-    mesh = rt.snapshotAsMesh(source)
+    spacing = [max(1e-6, float(value)) for value in spacing]
+    mesh = rt.snapshotAsMesh(source)                # world space
     try:
         get_vert, get_face = rt.getVert, rt.getFace
         verts = []
         for index in range(1, int(mesh.numverts) + 1):
-            local = get_vert(mesh, index) * back
-            verts.append((float(local.x), float(local.y), float(local.z)))
-        triangles = []
+            position = get_vert(mesh, index) if pieces else get_vert(mesh, index) * back
+            verts.append((float(position.x), float(position.y), float(position.z)))
+        faces = []
         for index in range(1, int(mesh.numfaces) + 1):
             face = get_face(mesh, index)
-            triangles.append((verts[int(face.x) - 1], verts[int(face.y) - 1], verts[int(face.z) - 1]))
+            faces.append((int(face.x) - 1, int(face.y) - 1, int(face.z) - 1))
     finally:
         rt.delete(mesh)
-    inside, skipped = volume.fill(triangles, [max(1e-6, float(s)) / k for s, k in zip(spacing, scale)])
+    if pieces:
+        inside, skipped, count = volume.fill_elements(verts, faces, spacing)
+        return [tuple(float(value) for value in point) for point in inside], skipped, count
+    triangles = [tuple(verts[index] for index in face) for face in faces]
+    inside, skipped = volume.fill(triangles, [s / k for s, k in zip(spacing, scale)])
     world = [rt.Point3(*point) * transform for point in inside]
-    return [(float(p.x), float(p.y), float(p.z)) for p in world], skipped
+    return [(float(p.x), float(p.y), float(p.z)) for p in world], skipped, 1
 
 
 def _mesh(name: str, verts: array, tris: array):
