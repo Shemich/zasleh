@@ -13,7 +13,13 @@ class HitPoints {
     };
     class HitEngine { name = "engine_hit"; radius = 2.5e-1; };
     class HitFuel { name = "fuel_hit"; };      /* radius = 9; */
+    class HitTurret: HitHull {
+        name = "turret_hit"; hitpoint[] = {"a", "b"};
+        class Effects { name = "smoke"; radius = 7; };
+        radius = 0.18;
+    };
 };
+class Turrets { class MainTurret { class HitPoints { class HitGun { name = "gun_hit"; radius = 0.2; }; }; }; };
 """
 
 
@@ -63,7 +69,8 @@ class FillTest(unittest.TestCase):
 
 class HitPointsTest(unittest.TestCase):
     def test_radius_of_a_hit_point_class(self):
-        self.assertEqual(hitpoints.radii(CONFIG), {"int_ammo_hit": 0.15, "engine_hit": 0.25})
+        self.assertEqual(hitpoints.radii(CONFIG), {"int_ammo_hit": 0.15, "engine_hit": 0.25, "turret_hit": 0.18,
+                                                   "smoke": 7.0, "gun_hit": 0.2})
 
 
 if __name__ == "__main__":
