@@ -1,0 +1,18 @@
+# Weapon: the parts a firearm is usually cut into
+# A line per selection:  name = what it is.  Edit freely, or copy the file to make a set of your own.
+
+magazine = magazine, leaves on reload
+bolt = bolt, moves on a shot
+bolt_catch = bolt catch
+trigger = trigger
+safety = fire selector
+muzzleFlash = muzzle flash (older models call it zasleh)
+BackSight = rear sight, folds when an optic is on
+ForeSight = front sight, folds when an optic is on
+OP = sight that moves with the zeroing
+bipod = bipod, the whole of it
+bipod_leg_L = left bipod leg
+bipod_leg_R = right bipod leg
+ammo_belt = cartridge belt, hidden when the weapon is empty
+bullet_cover = feed cover
+Camo = surface that can be retextured (hiddenSelections)

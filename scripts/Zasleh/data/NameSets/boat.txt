@@ -1,0 +1,21 @@
+# Boat: the parts a boat is usually cut into
+# A line per selection:  name = what it is.  Edit freely, or copy the file to make a set of your own.
+
+propeller1 = propeller 1, turns (propeller2 for the next)
+engine1 = outboard engine 1, turns with the helm (engine2 for the next)
+drivingWheel = helm
+Throttle = throttle lever
+mph = speed needle
+rpm = rpm needle
+fuel = fuel gauge needle
+glass1 = window 1 (glass2 ... for the next)
+karoserie = hull: shows the damage of the hull
+zbytek = everything else
+L svetlo = searchlight
+
+# what every vehicle has
+damageHide = everything that disappears when the vehicle is destroyed
+camo = surface 1 that can be retextured (hiddenSelections)
+camo2 = surface 2 that can be retextured
+camo3 = surface 3 that can be retextured
+clan = where the squad logo goes

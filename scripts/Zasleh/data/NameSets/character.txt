@@ -1,0 +1,44 @@
+# Character: the selections of a uniform, vest or headgear
+# A line per selection:  name = what it is.  Edit freely, or copy the file to make a set of your own.
+
+# surfaces
+camo = surface that can be retextured (hiddenSelections); camo1, camo2 when there are more
+insignia = where the unit insignia goes (upper arm)
+clan = where the squad logo goes
+injury_body = torso, gets the wound texture
+injury_hands = arms, get the wound texture
+injury_legs = legs, get the wound texture
+injury_head = head, gets the wound texture
+
+# the main bones; give them weights where two of them meet
+Pelvis = hips
+Spine = lower back
+Spine1 = belly
+Spine2 = lower chest
+Spine3 = upper chest
+Neck = neck
+Head = head
+LeftShoulder = left shoulder
+LeftArm = left upper arm
+LeftArmRoll = left upper arm, the twisting part
+LeftForeArm = left forearm
+LeftForeArmRoll = left forearm, the twisting part
+LeftHand = left hand
+RightShoulder = right shoulder
+RightArm = right upper arm
+RightArmRoll = right upper arm, the twisting part
+RightForeArm = right forearm
+RightForeArmRoll = right forearm, the twisting part
+RightHand = right hand
+LeftUpLeg = left thigh
+LeftUpLegRoll = left thigh, the twisting part
+LeftLeg = left shin
+LeftLegRoll = left shin, the twisting part
+LeftFoot = left foot
+LeftToeBase = left toes
+RightUpLeg = right thigh
+RightUpLegRoll = right thigh, the twisting part
+RightLeg = right shin
+RightLegRoll = right shin, the twisting part
+RightFoot = right foot
+RightToeBase = right toes

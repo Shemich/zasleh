@@ -1,0 +1,41 @@
+# Car: the parts a wheeled vehicle is usually cut into
+# A line per selection:  name = what it is.  Edit freely, or copy the file to make a set of your own.
+
+# wheels: wheel_<side>_<axle>, side 1 = left, 2 = right; axle 1 = front
+wheel_1_1_steering = front left wheel, steers
+wheel_1_1_damper = front left wheel, follows the suspension
+wheel_1_1_hide = front left wheel, the whole one (hidden once the tyre is gone)
+wheel_1_1_unhide = front left wheel, the destroyed one (shown instead)
+wheel_2_1_steering = front right wheel, steers
+wheel_2_1_damper = front right wheel, follows the suspension
+wheel_1_2_damper = rear left wheel, follows the suspension
+wheel_2_2_damper = rear right wheel, follows the suspension
+
+# cabin
+drivewheel = steering wheel
+door1 = door 1 (door2, door3 ... for the next)
+glass1 = window 1, disappears when broken (glass2 ... for the next)
+mph = speedometer needle
+rpm = rev counter needle
+fuel = fuel gauge needle
+
+# what shows damage
+karoserie = body: shows the damage of the body
+motor = bonnet: shows the damage of the engine
+palivo = fuel tank: shows its damage
+
+# lights
+Light_L = left headlight
+Light_R = right headlight
+zadni svetlo = tail lights
+brzdove svetlo = brake lights
+reverse_light = reversing light
+podsvit pristroju = instrument lighting
+spz = number plate
+
+# what every vehicle has
+damageHide = everything that disappears when the vehicle is destroyed
+camo1 = surface 1 that can be retextured (hiddenSelections)
+camo2 = surface 2 that can be retextured
+camo3 = surface 3 that can be retextured
+clan = where the squad logo goes

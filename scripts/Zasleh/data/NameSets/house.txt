@@ -1,0 +1,11 @@
+# House: the parts a building is usually cut into
+# A line per selection:  name = what it is.  Edit freely, or copy the file to make a set of your own.
+
+# number the next ones 2, 3, 4 ...
+Door_1 = door 1, opens
+Door_Handle_1 = handle of door 1, turns
+Glass_1_hide = window 1, the whole pane (hidden once it is broken)
+Glass_1_unhide = window 1, the broken pane (shown instead)
+Dam_1 = part of the building that disappears when damage zone 1 is destroyed
+Unhide_1 = ruined part shown instead of Dam_1
+DamT_1 = surface that gets the damage texture of zone 1

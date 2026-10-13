@@ -1,0 +1,11 @@
+title: Zasleh
+description: Arma 3 p3d import and export for 3ds Max - selections, materials, memory points, model.cfg
+remote_theme: just-the-docs/just-the-docs
+plugins:
+  - jekyll-remote-theme
+search_enabled: true
+heading_anchors: true
+aux_links:
+  "Zasleh on GitHub":
+    - "https://github.com/Shemich/zasleh"
+footer_content: "Zasleh - Arma 3 tools for 3ds Max"

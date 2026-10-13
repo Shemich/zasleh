@@ -1,0 +1,50 @@
+# Plane: the parts a plane is usually cut into
+# A line per selection:  name = what it is.  Edit freely, or copy the file to make a set of your own.
+
+# control surfaces
+aileronL = left aileron
+aileronR = right aileron
+elevatorL = left elevator
+elevatorR = right elevator
+rudder = rudder
+flapL = left flap
+flapR = right flap
+
+# airframe
+gear_1 = nose gear leg (gear_2, gear_3 for the main legs)
+gear_1_damper = nose gear, the part that follows the suspension
+gear_1_hatch_1 = nose gear door
+wheel_1 = nose wheel, turns (wheel_2, wheel_3 for the main wheels)
+canopy = canopy
+rotor = propeller, turns
+glass1 = glazing 1 (glass2 ... for the next)
+ladder = boarding ladder
+ejection_seat = ejection seat
+
+# cockpit
+stick_pilot = control stick
+throttle_pilot = throttle lever
+alt = altimeter needle
+speed = airspeed needle
+rpm = rpm needle
+climb = vertical speed needle
+fuel = fuel gauge needle
+horizont = artificial horizon
+kompas1 = compass card
+
+# what shows damage
+trup = fuselage
+zbytek = everything else
+
+# lights
+Light_L = left landing light
+Light_R = right landing light
+PositionLights = position lights
+CollisionLight_red = collision light
+
+# what every vehicle has
+damageHide = everything that disappears when the vehicle is destroyed
+camo1 = surface 1 that can be retextured (hiddenSelections)
+camo2 = surface 2 that can be retextured
+camo3 = surface 3 that can be retextured
+clan = where the squad logo goes

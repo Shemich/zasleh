@@ -1,0 +1,49 @@
+# Helicopter: the parts a helicopter is usually cut into
+# A line per selection:  name = what it is.  Edit freely, or copy the file to make a set of your own.
+
+# rotors
+main rotor = main rotor, turns
+main rotor static = main rotor blades, shown while it turns slowly
+main rotor blur = main rotor disc, shown at speed
+tail rotor = tail rotor, turns
+tail rotor static = tail rotor blades, shown while it turns slowly
+tail rotor blur = tail rotor disc, shown at speed
+
+# airframe
+door1 = door 1 (door2 ... for the next)
+gear1 = landing gear 1 (gear2 ... for the next)
+glass1 = window 1 (glass2 ... for the next)
+otocVez = gun turret, turns left and right
+otocHlaven = gun, goes up and down
+muzzleFlash = muzzle flash
+
+# cockpit
+stick_pilot = pilot's cyclic stick
+lever_pilot = pilot's collective lever
+alt = altimeter needle
+mph = airspeed needle
+rpm = rotor rpm needle
+fuel = fuel gauge needle
+vert_speed = vertical speed needle
+compass = compass card
+horizont = artificial horizon
+display_off = screens, shown while the engine is off
+
+# what shows damage
+trup = fuselage
+motor = engine
+elektronika = avionics
+zbytek = everything else
+
+# lights
+Light_L = left landing light
+Light_R = right landing light
+PositionLights = position lights
+podsvit pristroju = instrument lighting
+
+# what every vehicle has
+damageHide = everything that disappears when the vehicle is destroyed
+camo1 = surface 1 that can be retextured (hiddenSelections)
+camo2 = surface 2 that can be retextured
+camo3 = surface 3 that can be retextured
+clan = where the squad logo goes

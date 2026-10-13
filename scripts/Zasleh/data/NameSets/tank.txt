@@ -1,0 +1,44 @@
+# Tank: the parts a tracked vehicle is usually cut into
+# A line per selection:  name = what it is.  Edit freely, or copy the file to make a set of your own.
+
+# turret and gun
+otocVez = turret, turns left and right
+otocHlaven = main gun, goes up and down
+recoilHlaven = barrel, slides back on a shot
+zasleh = muzzle flash of the main gun
+zasleh2 = muzzle flash of the coaxial machine gun
+commander_turret = commander's cupola, turns
+commander_gun = commander's machine gun or sight, goes up and down
+poklop_driver = driver's hatch
+poklop_gunner = gunner's hatch
+poklop_commander = commander's hatch
+
+# running gear: number the next ones 2, 3, 4 ...
+kolL1 = left wheel without suspension: sprocket, idler, return roller
+kolP1 = right wheel without suspension
+koloL1 = left road wheel 1, turns and follows the suspension
+koloP1 = right road wheel 1
+podkoloL1 = suspension arm of left road wheel 1
+podkoloP1 = suspension arm of right road wheel 1
+pas_L = left track (its texture runs with the speed)
+pas_P = right track
+
+# what shows damage
+karoserie = hull: shows the damage of the hull
+vez = turret: shows the damage of the turret
+zbran = gun: shows the damage of the gun
+motor = engine deck: shows the damage of the engine
+zbytek = everything else
+
+# lights
+Light_L = left headlight
+Light_R = right headlight
+zadni svetlo = tail lights
+podsvit pristroju = instrument lighting
+
+# what every vehicle has
+damageHide = everything that disappears when the vehicle is destroyed
+camo1 = surface 1 that can be retextured (hiddenSelections)
+camo2 = surface 2 that can be retextured
+camo3 = surface 3 that can be retextured
+clan = where the squad logo goes
