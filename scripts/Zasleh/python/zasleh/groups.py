@@ -14,15 +14,15 @@ from .scene import COMPONENT, define_maxscript, from_bits, to_bits
 rt = pymxs.runtime
 
 _MAXSCRIPT = r'''
-fn atbFaceVerts p = (for f = 1 to (polyop.getNumFaces p) collect (polyop.getFaceVerts p f))
-fn atbPartFaces p faces = (for f in faces collect (polyop.getFaceVerts p f))
-fn atbPartMapFaces p ch faces = (for f in faces collect (polyop.getMapFace p ch f))
-fn atbGetMapVerts p ch idx = (for i in idx collect (polyop.getMapVert p ch i))
-fn atbHasChannel p ch = ((polyop.getNumMaps p) > ch and (polyop.getMapSupport p ch))
+fn zaslehFaceVerts p = (for f = 1 to (polyop.getNumFaces p) collect (polyop.getFaceVerts p f))
+fn zaslehPartFaces p faces = (for f in faces collect (polyop.getFaceVerts p f))
+fn zaslehPartMapFaces p ch faces = (for f in faces collect (polyop.getMapFace p ch f))
+fn zaslehGetMapVerts p ch idx = (for i in idx collect (polyop.getMapVert p ch i))
+fn zaslehHasChannel p ch = ((polyop.getNumMaps p) > ch and (polyop.getMapSupport p ch))
 -- a plain channel: a map vert per vert, all zero. Returns true if it had to be made.
-fn atbEnsureChannel p ch =
+fn zaslehEnsureChannel p ch =
 (
-    if atbHasChannel p ch then false else
+    if zaslehHasChannel p ch then false else
     (
         if (polyop.getNumMaps p) <= ch do polyop.setNumMaps p (ch + 1) keep:true
         polyop.setMapSupport p ch true
@@ -31,15 +31,15 @@ fn atbEnsureChannel p ch =
         true
     )
 )
--- take back what atbPatchChannel did: the faces get their old map faces
-fn atbUnpatchChannel p ch faceIdx faceMaps restoreIdx restoreVals count =
+-- take back what zaslehPatchChannel did: the faces get their old map faces
+fn zaslehUnpatchChannel p ch faceIdx faceMaps restoreIdx restoreVals count =
 (
     for k = 1 to faceIdx.count do polyop.setMapFace p ch faceIdx[k] faceMaps[k]
     for k = 1 to restoreIdx.count do polyop.setMapVert p ch restoreIdx[k] restoreVals[k]
     if (polyop.getNumMapVerts p ch) > count do polyop.setNumMapVerts p ch count keep:true
 )
 -- new map verts are only ever added, after the existing ones
-fn atbPatchChannel p ch newVals faceIdx faceMaps zeroIdx =
+fn zaslehPatchChannel p ch newVals faceIdx faceMaps zeroIdx =
 (
     local n = polyop.getNumMapVerts p ch
     if newVals.count > 0 do
@@ -51,7 +51,7 @@ fn atbPatchChannel p ch newVals faceIdx faceMaps zeroIdx =
     for i in zeroIdx do polyop.setMapVert p ch i [0, 0, 0]
 )
 -- group numbers present in a layer
-fn atbLayerNumbers p ch =
+fn zaslehLayerNumbers p ch =
 (
     local found = #{}
     for i = 1 to (polyop.getNumMapVerts p ch) do
@@ -62,7 +62,7 @@ fn atbLayerNumbers p ch =
     found as array
 )
 -- (verts, faces) of one group in a layer
-fn atbLayerMembers p ch number check =
+fn zaslehLayerMembers p ch number check =
 (
     local verts = #{}
     local faces = #{}
@@ -94,7 +94,7 @@ fn atbLayerMembers p ch number check =
     #(verts, faces)
 )
 -- (verts, faces) of a weighted group: component comp (1..3) of a slot channel
-fn atbSlotMembers p ch comp =
+fn zaslehSlotMembers p ch comp =
 (
     local verts = #{}
     local faces = #{}
@@ -113,7 +113,7 @@ fn atbSlotMembers p ch comp =
     )
     #(verts, faces)
 )
-fn atbChannelMax p ch =
+fn zaslehChannelMax p ch =
 (
     local top = [0, 0, 0]
     for i = 1 to (polyop.getNumMapVerts p ch) do
@@ -126,7 +126,7 @@ fn atbChannelMax p ch =
     top
 )
 -- A look at a whole layer, for the Check button: (verts in a group
-fn atbLayerCheck p ch =
+fn zaslehLayerCheck p ch =
 (
     local nv = polyop.getNumMapVerts p ch
     local numbers = for i = 1 to nv collect 0
@@ -184,7 +184,7 @@ fn atbLayerCheck p ch =
     #(grouped, blended - grouped, torn, openFaces, openNumbers, withFaces)
 )
 -- (verts with a weight, verts with blended values only) in the listed components
-fn atbSlotCheck p ch comps =
+fn zaslehSlotCheck p ch comps =
 (
     local hit = #{}
     local bad = #{}
@@ -214,14 +214,14 @@ fn atbSlotCheck p ch comps =
         )
     #(verts, blended - verts)
 )
-fn atbBigFaces p =
+fn zaslehBigFaces p =
 (
     local found = #{}
     for f = 1 to (polyop.getNumFaces p) where (polyop.getFaceDeg p f) > 4 do found[f] = true
     found
 )
 -- paint verts in a map channel of its own and show that channel as vert colours
-fn atbShowColors p ch verts colors background =
+fn zaslehShowColors p ch verts colors background =
 (
     if (polyop.getNumMaps p) <= ch do polyop.setNumMaps p (ch + 1) keep:true
     polyop.setMapSupport p ch true
@@ -234,7 +234,7 @@ fn atbShowColors p ch verts colors background =
     p.showVertexColors = true
     redrawViews()
 )
-fn atbHideColors p ch =
+fn zaslehHideColors p ch =
 (
     if (polyop.getNumMaps p) > ch and (polyop.getMapSupport p ch) do polyop.setMapSupport p ch false
     p.showVertexColors = false
@@ -286,7 +286,7 @@ def _restore(entry: dict) -> None:
     point3 = rt.Point3
     for step in reversed(entry["steps"]):
         if step["kind"] == "write":
-            rt.atbUnpatchChannel(step["node"], step["channel"], step["faces"],
+            rt.zaslehUnpatchChannel(step["node"], step["channel"], step["faces"],
                                  [rt.Array(*mapped) for mapped in step["old"]],
                                  rt.Array(*[index for index, _value in step["zeroed"]]),
                                  [point3(*value) for _index, value in step["zeroed"]], step["base"])
@@ -344,7 +344,7 @@ def undo_last() -> str:
             latest[(int(rt.getHandleByAnim(step["node"])), step["channel"])] = step
     for step in latest.values():            # is the mesh still as the edit left it?
         node, channel = step["node"], step["channel"]
-        same = (rt.atbHasChannel(node, channel) and
+        same = (rt.zaslehHasChannel(node, channel) and
                 (int(polyop.getNumVerts(node)), int(polyop.getNumFaces(node))) == step["counts"] and
                 int(polyop.getNumMapVerts(node, channel)) == step["after"])
         if same:
@@ -366,15 +366,15 @@ class Patch:
         self.node = node
         self.channel = channel
         touch(node)
-        self.created = bool(rt.atbEnsureChannel(node, channel))
+        self.created = bool(rt.zaslehEnsureChannel(node, channel))
         if self.created and _recording is not None:
             _recording["steps"].append({"kind": "channel", "node": node, "channel": channel})
         self.face_ids = faces
         bits = to_bits(faces)
-        self.face_verts = [[int(v) for v in face] for face in rt.atbPartFaces(node, bits)]
-        self.map_faces = [[int(m) for m in face] for face in rt.atbPartMapFaces(node, channel, bits)]
+        self.face_verts = [[int(v) for v in face] for face in rt.zaslehPartFaces(node, bits)]
+        self.map_faces = [[int(m) for m in face] for face in rt.zaslehPartMapFaces(node, channel, bits)]
         wanted = sorted({m for face in self.map_faces for m in face})
-        found = rt.atbGetMapVerts(node, channel, rt.Array(*wanted)) if wanted else []
+        found = rt.zaslehGetMapVerts(node, channel, rt.Array(*wanted)) if wanted else []
         value_of = {index: (v.x, v.y, v.z) for index, v in zip(wanted, found)}
         self.original = [[value_of[m] for m in face] for face in self.map_faces]
         self.values = [[list(value) for value in face] for face in self.original]
@@ -435,7 +435,7 @@ class Patch:
                 "zeroed": [(m, value_of[m]) for m in zeroed],
                 "counts": (int(polyop.getNumVerts(self.node)), int(polyop.getNumFaces(self.node)))})
         point3 = rt.Point3
-        rt.atbPatchChannel(self.node, self.channel, [point3(*value) for value in new_values],
+        rt.zaslehPatchChannel(self.node, self.channel, [point3(*value) for value in new_values],
                            face_ids, face_maps, rt.Array(*zeroed))
 
     # layer editing: x = group number, y = its check value, z = face flag
@@ -548,17 +548,17 @@ def picked(node) -> Tuple[str, List[int]]:
 
 def _layers_on(node, registry: reg.Registry) -> List[int]:
     define()
-    return [channel for channel in registry.layers if rt.atbHasChannel(node, channel)]
+    return [channel for channel in registry.layers if rt.zaslehHasChannel(node, channel)]
 
 
 def _homes(node, registry: reg.Registry, number: int) -> List[int]:
     """Layers of the object in which the group has verts"""
     return [channel for channel in _layers_on(node, registry)
-            if number in {int(n) for n in rt.atbLayerNumbers(node, channel)}]
+            if number in {int(n) for n in rt.zaslehLayerNumbers(node, channel)}]
 
 
 def _layer_members(node, channel: int, number: int) -> Tuple[List[int], List[int]]:
-    found = rt.atbLayerMembers(node, channel, float(number), reg.check_value(number))
+    found = rt.zaslehLayerMembers(node, channel, float(number), reg.check_value(number))
     return from_bits(found[0]), from_bits(found[1])
 
 
@@ -584,8 +584,8 @@ def members(node, registry: reg.Registry, name: str) -> Tuple[Set[int], Set[int]
             found_verts, found_faces = _layer_members(node, channel, number)
             verts.update(found_verts)
             faces.update(found_faces)
-    if slot is not None and rt.atbHasChannel(node, slot[0]):
-        found = rt.atbSlotMembers(node, slot[0], slot[1] + 1)
+    if slot is not None and rt.zaslehHasChannel(node, slot[0]):
+        found = rt.zaslehSlotMembers(node, slot[0], slot[1] + 1)
         verts.update(from_bits(found[0]))
         faces.update(from_bits(found[1]))
     return verts, faces
@@ -596,7 +596,7 @@ def weights(node, registry: reg.Registry, name: str) -> Dict[int, float]:
     verts, _faces = members(node, registry, name)
     out = {vertex: 1.0 for vertex in verts}
     slot = _slot_of(registry, name.strip())
-    if slot is not None and rt.atbHasChannel(node, slot[0]) and verts:
+    if slot is not None and rt.zaslehHasChannel(node, slot[0]) and verts:
         patch = Patch(node, slot[0], faces_around(node, verts))
         for vertex, corners in patch.corners_at().items():
             if vertex in out:
@@ -657,7 +657,7 @@ def _free_layer(node, registry: reg.Registry, number: int, vertices: List[int], 
         index += 1
         if channel in skip:
             continue
-        if not rt.atbHasChannel(node, channel):
+        if not rt.zaslehHasChannel(node, channel):
             return channel
         if Patch(node, channel, around).numbers_at(vertices) <= {0, number}:
             return channel
@@ -750,7 +750,7 @@ def remove(node, registry: reg.Registry, name: str,
                 patch.layer_clear(number, [v for v in vertices if v not in kept])
             patch.write(vertices)
     slot = _slot_of(registry, name)
-    if slot is not None and rt.atbHasChannel(node, slot[0]):
+    if slot is not None and rt.zaslehHasChannel(node, slot[0]):
         channel, component = slot
         patch = Patch(node, channel, around)
         if what == "verts":
@@ -927,7 +927,7 @@ def inspect(node, registry: reg.Registry) -> dict:
     torn: Set[int] = set()
     open_faces: Dict[str, List[int]] = {}
     for channel in _layers_on(node, registry):
-        found = rt.atbLayerCheck(node, channel)
+        found = rt.zaslehLayerCheck(node, channel)
         grouped.update(from_bits(found[0]))
         blended.update(from_bits(found[1]))
         torn.update(from_bits(found[2]))
@@ -938,13 +938,13 @@ def inspect(node, registry: reg.Registry) -> dict:
                 open_faces.setdefault(name, []).append(int(face))
     for channel, entries in registry.by_channel().items():
         components = [i + 1 for i, e in enumerate(entries) if e is not None and e["kind"] == reg.WEIGHTED]
-        if components and rt.atbHasChannel(node, channel):
-            found = rt.atbSlotCheck(node, channel, rt.Array(*components))
+        if components and rt.zaslehHasChannel(node, channel):
+            found = rt.zaslehSlotCheck(node, channel, rt.Array(*components))
             grouped.update(from_bits(found[0]))
             blended.update(from_bits(found[1]))
     alive = set(range(1, int(polyop.getNumVerts(node)) + 1)) - set(from_bits(polyop.getDeadVerts(node)))
     return {"ungrouped": sorted(alive - grouped), "torn": sorted(torn), "blended": sorted(blended),
-            "open": open_faces, "ngons": from_bits(rt.atbBigFaces(node))}
+            "open": open_faces, "ngons": from_bits(rt.zaslehBigFaces(node))}
 
 
 def check(node, registry: reg.Registry) -> Tuple[str, str]:
@@ -1015,7 +1015,7 @@ def show(node, registry: reg.Registry, name: str) -> str:
     found = weights(node, registry, name)
     verts = sorted(found)
     point3 = rt.Point3
-    rt.atbShowColors(node, reg.DISPLAY_CHANNEL, rt.Array(*verts),
+    rt.zaslehShowColors(node, reg.DISPLAY_CHANNEL, rt.Array(*verts),
                      rt.Array(*[point3(*heat(found[v])) for v in verts]), point3(*_OUTSIDE))
     rt.setAppData(node, reg.SHOWN_APPDATA_ID, name)
     return "%s: %d vertices shown in colour (red = weight 1, blue = near 0)" % (name, len(verts))
@@ -1023,7 +1023,7 @@ def show(node, registry: reg.Registry, name: str) -> str:
 
 def hide(node) -> str:
     define()
-    rt.atbHideColors(node, reg.DISPLAY_CHANNEL)
+    rt.zaslehHideColors(node, reg.DISPLAY_CHANNEL)
     rt.deleteAppData(node, reg.SHOWN_APPDATA_ID)
     return "Colours off."
 
@@ -1033,13 +1033,13 @@ def find_components(node, registry: reg.Registry) -> str:
     define()
     polyop = rt.polyop
     polyop.collapseDeadStructs(node)
-    face_verts = [[int(v) for v in face] for face in rt.atbFaceVerts(node)]
+    face_verts = [[int(v) for v in face] for face in rt.zaslehFaceVerts(node)]
     if not face_verts:
         raise GroupError("The object has no polygons.")
     all_faces = list(range(1, len(face_verts) + 1))
     all_verts = sorted({v for face in face_verts for v in face})
     for channel in _layers_on(node, registry):                    # old components go
-        stale = [int(n) for n in rt.atbLayerNumbers(node, channel)
+        stale = [int(n) for n in rt.zaslehLayerNumbers(node, channel)
                  if COMPONENT.match(registry.name_of(int(n)) or "")]
         if stale:
             patch = Patch(node, channel, all_faces)
@@ -1083,16 +1083,16 @@ def scan(node, registry: reg.Registry) -> List[str]:
     define()
     names: Set[str] = set()
     for channel in _layers_on(node, registry):
-        for number in rt.atbLayerNumbers(node, channel):
+        for number in rt.zaslehLayerNumbers(node, channel):
             name = registry.name_of(int(number))
             if name is not None:
                 names.add(name)
     for channel, entries in registry.by_channel().items():
-        if not rt.atbHasChannel(node, channel):
+        if not rt.zaslehHasChannel(node, channel):
             continue
         weighted = [(i, e) for i, e in enumerate(entries) if e is not None and e["kind"] == reg.WEIGHTED]
         if weighted:
-            top = rt.atbChannelMax(node, channel)
+            top = rt.zaslehChannelMax(node, channel)
             for i, entry in weighted:
                 if (top.x, top.y, top.z)[i] > 0.0:
                     names.add(entry["name"])

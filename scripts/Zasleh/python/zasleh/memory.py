@@ -5,17 +5,17 @@ import json
 import pymxs
 
 from . import groups
-from .scene import UNNAMED_POINT, define_maxscript, from_bits, to_bits
+from .scene import UNNAMED_POINT, define_maxscript, from_bits, to_bits, user_prop
 
 rt = pymxs.runtime
 DEFAULT_LAYER = "Memory"
 
 _TOOL = r'''
-tool atbPlacePoint
+tool zaslehPlacePoint
 (
     on mousePoint clickno do
     (
-        python.Execute ("import atb_max.memory as m\nm.placed(" + (worldPoint.x as string) + ", " + (worldPoint.y as string) + ", " + (worldPoint.z as string) + ")")
+        python.Execute ("import zasleh.memory as m\nm.placed(" + (worldPoint.x as string) + ", " + (worldPoint.y as string) + ", " + (worldPoint.z as string) + ")")
     )
 )
 '''
@@ -29,13 +29,13 @@ class MemoryError_(Exception):
 
 def names_of(node) -> list:
     """The selections a point helper is in"""
-    extra = rt.getUserProp(node, "atb_sels")
+    extra = user_prop(node, "sels")
     if extra:
         try:
             return [str(item[0]) if isinstance(item, list) else str(item) for item in json.loads(str(extra))]
         except (ValueError, IndexError, TypeError):
             pass
-    if rt.getUserProp(node, "atb_nosel") or str(node.name) == UNNAMED_POINT:
+    if user_prop(node, "nosel") or str(node.name) == UNNAMED_POINT:
         return []
     return [str(node.name)]
 
@@ -43,8 +43,8 @@ def names_of(node) -> list:
 def set_names(node, names) -> None:
     names = [name.strip() for name in names if name.strip()]
     node.name = names[0] if names else UNNAMED_POINT
-    rt.setUserProp(node, "atb_nosel", not names)
-    rt.setUserProp(node, "atb_sels", json.dumps(names) if len(names) > 1 else "")
+    rt.setUserProp(node, "zasleh_nosel", not names)
+    rt.setUserProp(node, "zasleh_sels", json.dumps(names) if len(names) > 1 else "")
 
 
 def layer(name: str = DEFAULT_LAYER, create: bool = False):
@@ -61,7 +61,7 @@ def points(layer_name: str = DEFAULT_LAYER) -> list:
     if found is None:
         return []
     out = []
-    for node in rt.atbLayerNodes(found):
+    for node in rt.zaslehLayerNodes(found):
         if rt.classOf(node) == rt.Point:
             position = node.pos
             out.append((node, names_of(node), (position.x, position.y, position.z)))
@@ -165,7 +165,7 @@ def place(name: str = "", layer_name: str = DEFAULT_LAYER, done=None) -> None:
         rt.execute(_TOOL)
         _tool_ready = True
     _placing.update(name=name, layer=layer_name, done=done)
-    rt.startTool(rt.atbPlacePoint)
+    rt.startTool(rt.zaslehPlacePoint)
 
 
 def placed(x: float, y: float, z: float) -> None:

@@ -3,7 +3,7 @@ import os
 import pymxs
 from PySide2 import QtCore, QtGui, QtWidgets
 
-from atb_p3d import rvmat
+from zasleh.formats import rvmat
 
 from .. import materials, settings
 from .model_tab import PathRow

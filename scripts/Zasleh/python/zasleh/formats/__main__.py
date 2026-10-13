@@ -120,7 +120,7 @@ def _names(args) -> int:
 
 
 def main(argv=None) -> int:
-    parser = argparse.ArgumentParser(prog="atb_p3d", description=__doc__.split("\n")[0])
+    parser = argparse.ArgumentParser(prog="zasleh.formats", description=__doc__.split("\n")[0])
     commands = parser.add_subparsers(dest="command", required=True)
     info = commands.add_parser("info", help="show what is inside a p3d")
     info.add_argument("file")
@@ -142,7 +142,7 @@ def main(argv=None) -> int:
     args = parser.parse_args(argv)
     try:
         return args.run(args)
-    except P3DError as error:
+    except (P3DError, OSError) as error:
         print("error: %s" % error, file=sys.stderr)
         return 2
 

@@ -18,9 +18,9 @@ def check(name, condition, detail=None):
 try:
     scripts = str(rt.getDir(rt.Name("scripts")))
     sys.path.insert(0, os.path.join(scripts, "Zasleh", "python"))
-    import atb_p3d
-    from atb_p3d import lods
-    from atb_max import exporter, reader
+    from zasleh import formats
+    from zasleh.formats import lods
+    from zasleh import exporter, reader
 
     rt.resetMaxFile(rt.Name("noPrompt"))
     manager = rt.LayerManager
@@ -50,11 +50,11 @@ try:
     check("LOD layers are recognised", all(candidates[n]["checked"] for n in ("1", "2", "Memory", "Geometry")))
     check("a layer that is not a LOD is offered unchecked", candidates["my helpers"]["checked"] is False)
 
-    folder = os.environ["ATB_TMP"]
-    path = os.path.join(folder, "atb_scene_test.p3d")
+    folder = os.environ["ZASLEH_TMP"]
+    path = os.path.join(folder, "zasleh_scene_test.p3d")
     exporter.export_p3d(path, [name for name, c in candidates.items() if c["checked"]])
     check("file written", os.path.isfile(path))
-    model = atb_p3d.read(path)
+    model = formats.read(path)
     os.remove(path)
     by_name = {lods.lod_name(lod.resolution): lod for lod in model.lods}
     check("four LODs, sorted", [lods.lod_name(l.resolution) for l in model.lods] == ["1", "2", "Geometry", "Memory"],
@@ -114,13 +114,13 @@ try:
           len(three.faces) > len(scene_faces) and len(three.points) == int(polyop.getNumVerts(barrel)) and
           three.problems() == [], [sorted(set(scene_faces)), len(scene_faces), len(three.faces), three.problems()])
     check("n-gons: the scene is left as it was, and the report says what was done",
-          degrees(barrel) == scene_faces and len(list(rt.atbLayerNodes(layer3))) == 1 and
+          degrees(barrel) == scene_faces and len(list(rt.zaslehLayerNodes(layer3))) == 1 and
           any("barrel" in note for note in report3["notes"]) and
           len(three.selection("barrel").face_indices()) == len(three.faces), report3["notes"])
 
     # mass: kilograms spread over the picked points of a geometry LOD
-    from atb_max import mass
-    from atb_max import registry as reg
+    from zasleh import mass
+    from zasleh import registry as reg
     check("a geometry LOD without mass is pointed out",
           any("mass is 0" in note for note in exporter.build_model(["Geometry"])[1]["notes"]))
     registry = reg.Registry.load()
@@ -142,7 +142,7 @@ try:
           "only a Geometry LOD" in mass.set_mass(body, registry, 10.0, "faces", [1]))
 
     # export options for materials made in 3ds Max: plain paths, .paa paths, .rvmat, deploy
-    work = os.path.join(folder, "atb_export_test")
+    work = os.path.join(folder, "zasleh_export_test")
     shutil.rmtree(work, ignore_errors=True)
     os.makedirs(os.path.join(work, "proj", "src"))
     os.makedirs(os.path.join(work, "proj", "model"))
@@ -157,7 +157,7 @@ try:
     target = os.path.join(work, "proj", "model", "hull.p3d")
 
     def written():
-        return sorted({(face.texture, face.material) for face in atb_p3d.read(target).lods[0].faces})
+        return sorted({(face.texture, face.material) for face in formats.read(target).lods[0].faces})
 
     report4 = exporter.export_p3d(target, ["4"], exporter.Options(tex_root=work, convert_paa=False))
     check("options: the bitmap's own path, relative to the texture root",
@@ -212,5 +212,5 @@ except Exception as error:  # noqa: BLE001
     out["ok"] = False
     out["error"] = "%s: %s" % (type(error).__name__, error)
     out["trace"] = traceback.format_exc()
-with open(os.environ["ATB_OUT"], "w", encoding="utf-8") as stream:
+with open(os.environ["ZASLEH_OUT"], "w", encoding="utf-8") as stream:
     json.dump(out, stream, indent=1, default=str)

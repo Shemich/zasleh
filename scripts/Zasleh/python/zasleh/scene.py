@@ -8,7 +8,7 @@ from typing import Iterable, List, Optional
 
 import pymxs
 
-import atb_p3d
+from zasleh import formats
 
 rt = pymxs.runtime
 
@@ -19,9 +19,9 @@ UNNAMED_POINT = "point"             # the name of a point helper that is in no s
 PREVIEW_EXTENSIONS = (".tga", ".png", ".tif", ".tiff", ".jpg", ".bmp", ".dds")     # pictures 3ds Max opens
 
 _MAXSCRIPT = r'''
-fn atbLayerNodes l = (local found = #(); l.nodes &found; found)
-fn atbBits b = (b as array)
-global atbArmaMaterialCA = attributes atbArmaMaterial attribID:#(0x41544203, 0x6d61746c)
+fn zaslehLayerNodes l = (local found = #(); l.nodes &found; found)
+fn zaslehBits b = (b as array)
+global zaslehArmaMaterialCA = attributes zaslehArmaMaterial attribID:#(0x41544203, 0x6d61746c)
 (
     parameters main rollout:params
     (
@@ -52,7 +52,15 @@ def to_bits(numbers: Iterable[int]):
 
 def from_bits(bitarray) -> List[int]:
     define_maxscript()
-    return [int(i) for i in rt.atbBits(bitarray)]
+    return [int(i) for i in rt.zaslehBits(bitarray)]
+
+
+def user_prop(node, key: str):
+    """What the plugin noted on a node (zasleh_<key> in its user properties), None if nothing"""
+    value = rt.getUserProp(node, "zasleh_" + key)
+    if value is None:
+        value = rt.getUserProp(node, "atb_" + key)          # scenes made before 0.1.1
+    return value
 
 
 def layers() -> list:
@@ -78,10 +86,10 @@ def set_layer_info(layer, info: dict) -> None:
 def layer_resolution(layer, info: Optional[dict] = None) -> Optional[float]:
     """The LOD a layer stands for, None if its name is no LOD's"""
     info = layer_info(layer) if info is None else info
-    named = atb_p3d.lod_resolution(str(layer.name).split(" [")[0])
+    named = formats.lod_resolution(str(layer.name).split(" [")[0])
     if "resolution" in info:
         stored = float(info["resolution"])
         # the layer name wins once the user has renamed the layer to another kind of LOD
-        if named is None or atb_p3d.lod_name(stored) == atb_p3d.lod_name(named):
+        if named is None or formats.lod_name(stored) == formats.lod_name(named):
             return stored
     return named

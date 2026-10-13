@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Runtime.InteropServices;
 using Autodesk.Max;
 
-public static unsafe class AtbBulk
+public static unsafe class ZaslehBulk
 {
     // "class Face" of the SDK: DWORD v[3]; DWORD smGroup; DWORD flags;
     [StructLayout(LayoutKind.Sequential)]
@@ -211,7 +211,7 @@ public static unsafe class AtbBulk
         return verts.Length / 3;
     }
 
-    // The two heavy steps of preparing a mesh, as atb_p3d does them in Python (meshprep
+    // The two heavy steps of preparing a mesh, as zasleh.formats does them in Python (meshprep
 
     static int Find(int[] parent, int corner)
     {
@@ -764,7 +764,7 @@ public static unsafe class AtbBulk
         return at;
     }
 
-    // Normals the way Object Builder computes them: atb_p3d/normals.py compute() is the reference.
+    // Normals the way Object Builder computes them: formats/normals.py compute() is the reference.
     // Points flagged "angle normal" are left to the Python code (acos may differ in the last bit).
     const uint LightMask = 0x3000A7, BothSides = 0x20, Sky = 0x80, Reverse = 0x100000, Flat = 0x200000;
     const uint LockNormal = 0x2000000;

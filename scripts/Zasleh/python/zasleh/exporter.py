@@ -9,8 +9,8 @@ from typing import List, Optional, Tuple
 
 import pymxs
 
-import atb_p3d
-from atb_p3d import P3D
+from zasleh import formats
+from zasleh.formats import P3D
 
 from . import materials, reader
 from . import registry as reg
@@ -26,7 +26,7 @@ class Options:
     convert_paa: bool = True            # write .paa instead of the bitmap's own extension
     tex_root: Optional[str] = None      # paths are written relative to this folder
     gen_rvmat: bool = False             # write an .rvmat per material and put it on the faces
-    rvmat_preset: str = "Super"         # atb_p3d.rvmat.PRESETS
+    rvmat_preset: str = "Super"         # formats.rvmat.PRESETS
     deploy: bool = False                # copy / convert the textures into deploy_dir
     deploy_dir: str = "data"            # relative to the p3d, or absolute
     image_to_paa: str = ""              # ImageToPAA.exe of Arma 3 Tools, for the conversion
@@ -71,7 +71,7 @@ def candidate_layers(include_empty: bool = False) -> List[dict]:
     manager = rt.LayerManager
     for index in range(int(manager.count)):
         layer = manager.getLayer(index)
-        nodes = list(rt.atbLayerNodes(layer))
+        nodes = list(rt.zaslehLayerNodes(layer))
         objects = sum(1 for node in nodes if rt.superClassOf(node) == rt.GeometryClass)
         points = sum(1 for node in nodes if rt.classOf(node) == rt.Point)
         info = layer_info(layer)
@@ -81,7 +81,7 @@ def candidate_layers(include_empty: bool = False) -> List[dict]:
         name = str(layer.name)
         out.append({
             "layer": name,
-            "lod": atb_p3d.lod_name(resolution) if resolution is not None else "",
+            "lod": formats.lod_name(resolution) if resolution is not None else "",
             "objects": objects,
             "points": points,
             # the default layer "0" is a LOD only if a LOD was imported into it
@@ -121,10 +121,10 @@ def build_model(layer_names: Optional[List[str]] = None,
         twin = next((row for row in report["lods"] if row["resolution"] == lod.resolution), None)
         if twin is not None:
             problems.append("layers \"%s\" and \"%s\" are the same LOD (%s)"
-                            % (twin["layer"], name, atb_p3d.lod_name(lod.resolution)))
+                            % (twin["layer"], name, formats.lod_name(lod.resolution)))
             continue
         model.lods.append(lod)
-        row = {"layer": name, "lod": atb_p3d.lod_name(lod.resolution), "resolution": lod.resolution,
+        row = {"layer": name, "lod": formats.lod_name(lod.resolution), "resolution": lod.resolution,
                "points": len(lod.points), "faces": len(lod.faces), "selections": len(lod.selections)}
         if lod.mass is not None:
             row["mass"] = round(sum(lod.mass), 3)
@@ -143,7 +143,7 @@ def export_p3d(path: str, layer_names: Optional[List[str]] = None, options: Opti
     """Write the chosen LOD layers (default: all recognised ones) to a p3d file"""
     textures = Textures(options, path)
     model, report = build_model(layer_names, textures)
-    atb_p3d.write(model, path)
+    formats.write(model, path)
     done = textures.finish()
     report["notes"] += done.pop("texture_notes")
     report.update(done)

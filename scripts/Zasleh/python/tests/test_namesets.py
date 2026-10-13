@@ -1,7 +1,7 @@
 import os
 import unittest
 
-from atb_p3d import namesets
+from zasleh.formats import namesets
 
 SETS = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "..", "data", "NameSets")
 

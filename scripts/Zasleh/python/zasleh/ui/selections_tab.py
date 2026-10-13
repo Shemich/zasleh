@@ -3,7 +3,7 @@ import os
 import pymxs
 from PySide2 import QtCore, QtGui, QtWidgets
 
-from atb_p3d import namesets
+from zasleh.formats import namesets
 
 from .. import selections, settings
 from .. import registry as reg

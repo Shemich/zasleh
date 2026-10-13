@@ -8,15 +8,15 @@ from typing import Callable, Dict, List, Optional, Sequence, Tuple
 
 import pymxs
 
-import atb_p3d
-from atb_p3d import LOD, Face, Mass, Property, Selection, SharpEdges, UVSet, weight_to_byte
-from atb_p3d import normals as normals_module
-from atb_p3d.flags import POINT_SPECIAL_LOCKNORMAL
-from atb_p3d.meshprep import flag_from_code, from_scene
+from zasleh import formats
+from zasleh.formats import LOD, Face, Mass, Property, Selection, SharpEdges, UVSet, weight_to_byte
+from zasleh.formats import normals as normals_module
+from zasleh.formats.flags import POINT_SPECIAL_LOCKNORMAL
+from zasleh.formats.meshprep import flag_from_code, from_scene
 
 from . import bulk
 from . import registry as reg
-from .scene import UNNAMED_POINT, define_maxscript, layer_info, layer_resolution
+from .scene import UNNAMED_POINT, define_maxscript, layer_info, layer_resolution, user_prop
 
 rt = pymxs.runtime
 
@@ -42,17 +42,12 @@ def _channel(node, channel: int, live_faces: List[int]):
     return verts, faces
 
 
-def _user_prop(node, key: str):
-    value = rt.getUserProp(node, key)
-    return None if value is None else value
-
-
 class _Mesh:
     """One geometry object, read into 0-based indices local to the object"""
 
     def __init__(self, node, registry: reg.Registry, textures: TextureLookup):
         self.name = str(node.name)
-        self._marked = _user_prop(node, "atb_nosel")      # True / False, or None when never set
+        self._marked = user_prop(node, "nosel")      # True / False, or None when never set
         self.split = 0                                    # polys with more than 4 corners, cut up
         source, temporary = node, False
         if rt.classOf(node.baseobject) != rt.Editable_Poly or int(node.modifiers.count) > 0:
@@ -133,8 +128,8 @@ class _Mesh:
     def _read_slowly(self, node, registry: reg.Registry) -> list:
         """The same through MAXScript, an element at a time: any object, dead verts and faces too"""
         polyop = rt.polyop
-        dead_verts = {int(i) for i in rt.atbBits(polyop.getDeadVerts(node))}
-        dead_faces = {int(i) for i in rt.atbBits(polyop.getDeadFaces(node))}
+        dead_verts = {int(i) for i in rt.zaslehBits(polyop.getDeadVerts(node))}
+        dead_faces = {int(i) for i in rt.zaslehBits(polyop.getDeadFaces(node))}
         live_verts = [i for i in range(1, int(polyop.getNumVerts(node)) + 1) if i not in dead_verts]
         live_faces = [f for f in range(1, int(polyop.getNumFaces(node)) + 1) if f not in dead_faces]
         index_of = {vertex: k for k, vertex in enumerate(live_verts)}
@@ -286,7 +281,7 @@ def read_layer(layer, registry: Optional[reg.Registry] = None,
     if resolution is None:
         raise SceneError("layer \"%s\" is not a LOD: its name is neither a number nor a LOD name" % layer.name)
 
-    nodes = list(rt.atbLayerNodes(layer))
+    nodes = list(rt.zaslehLayerNodes(layer))
     helpers = [node for node in nodes if rt.classOf(node) == rt.Point]
     meshes = [_Mesh(node, registry, textures) for node in nodes
               if rt.superClassOf(node) == rt.GeometryClass and rt.classOf(node) != rt.Targetobject]
@@ -316,7 +311,7 @@ def read_layer(layer, registry: Optional[reg.Registry] = None,
             else:
                 twins.append((m, local, first))
     for h, node in enumerate(helpers):
-        key = _user_prop(node, "atb_point")
+        key = user_prop(node, "point")
         entries.append((0, int(key), -1, h) if key else (1, 0, -1, h))
     order = sorted(range(len(entries)), key=lambda i: (entries[i][0], entries[i][1], i))
     mesh_index: List[List[int]] = [[0] * len(mesh.points) for mesh in meshes]
@@ -449,21 +444,21 @@ def read_layer(layer, registry: Optional[reg.Registry] = None,
     for h, node in enumerate(helpers):
         point = helper_index[h]
         names: List[Tuple[str, int]] = []
-        extra = _user_prop(node, "atb_sels")
+        extra = user_prop(node, "sels")
         if extra:
             try:
                 for item in json.loads(str(extra)):           # "name" or ["name", weight byte]
                     names.append((str(item[0]), int(item[1]) & 0xFF) if isinstance(item, list) else (str(item), 1))
             except (ValueError, IndexError, TypeError):
                 names = []
-        if not names and not _user_prop(node, "atb_nosel") and str(node.name) != UNNAMED_POINT:
+        if not names and not user_prop(node, "nosel") and str(node.name) != UNNAMED_POINT:
             names = [(str(node.name), 1)]
         for name, byte in names:
             selection(name).weights[point] = byte
-        flags = _user_prop(node, "atb_flags")
+        flags = user_prop(node, "flags")
         if flags:
             lod.point_flags[point] = int(flags)
-        mass = _user_prop(node, "atb_mass")
+        mass = user_prop(node, "mass")
         if mass:
             masses[point] = float(mass)
 
@@ -483,7 +478,7 @@ def read_layer(layer, registry: Optional[reg.Registry] = None,
     lod.taggs[:] = [t for t in lod.taggs if type(t) is not Selection or any(t.weights) or any(t.faces)]
     for key, value in info.get("properties", []):
         lod.taggs.append(Property(key, value))
-    if atb_p3d.has_mass(resolution):
+    if formats.has_mass(resolution):
         lod.taggs.append(Mass(masses))
     used_sets = sorted({0} | set(info.get("uv_sets", [])) | {s for mesh in meshes for s in mesh.uv})
     for set_index in used_sets:

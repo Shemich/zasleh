@@ -5,7 +5,7 @@ import tempfile
 import unittest
 import zlib
 
-from atb_p3d import paa
+from zasleh.formats import paa
 
 from . import paa_samples
 

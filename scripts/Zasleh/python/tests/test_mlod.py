@@ -3,7 +3,7 @@
 import struct
 import unittest
 
-from atb_p3d import (LOD, P3D, WEIGHT_OF_BYTE, Animation, Face, Mass, P3DError, Property, Selection,
+from zasleh.formats import (LOD, P3D, WEIGHT_OF_BYTE, Animation, Face, Mass, P3DError, Property, Selection,
                      SharpEdges, Tagg, UVSet, dumps, has_mass, is_point_lod, is_shadow_lod, loads,
                      lod_name, lod_resolution, weight_to_byte)
 

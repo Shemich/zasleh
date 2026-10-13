@@ -2,9 +2,9 @@
 
 import unittest
 
-from atb_p3d import LOD, Face, Selection, SharpEdges, UVSet, normals
-from atb_p3d.meshprep import Slot, face_uvs, flag_code, flag_from_code, prepare
-from atb_p3d.smoothing import (interior_edges, shading_differences, sharp_edges,
+from zasleh.formats import LOD, Face, Selection, SharpEdges, UVSet, normals
+from zasleh.formats.meshprep import Slot, face_uvs, flag_code, flag_from_code, prepare
+from zasleh.formats.smoothing import (interior_edges, shading_differences, sharp_edges,
                                sharp_edges_from_normals, to_smoothing_groups)
 
 # a cube: 8 points, 6 quads

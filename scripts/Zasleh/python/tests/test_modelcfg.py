@@ -1,7 +1,7 @@
 import unittest
 
-from atb_p3d import modelcfg
-from atb_p3d.modelcfg import Animation, ModelCfg
+from zasleh.formats import modelcfg
+from zasleh.formats.modelcfg import Animation, ModelCfg
 
 SAMPLE = '''
 // a hand-written file

@@ -2,8 +2,8 @@
 
 import pymxs
 
-import atb_p3d
-from atb_p3d import lods
+from zasleh import formats
+from zasleh.formats import lods
 
 from .scene import define_maxscript, layer_info, set_layer_info
 
@@ -54,7 +54,7 @@ def duplicate(source: str, name: str) -> int:
     define_maxscript()
     layer = _layer(source)
     target = rt.LayerManager.newLayerFromName(_free(name))
-    nodes = list(rt.atbLayerNodes(layer))
+    nodes = list(rt.zaslehLayerNodes(layer))
     count = 0
     if nodes:
         done, copies = rt.maxOps.cloneNodes(rt.Array(*nodes), cloneType=rt.Name("copy"), newNodes=pymxs.byref(None))
@@ -79,7 +79,7 @@ def delete(name: str) -> int:
     if name == "0":
         raise LodError("The default layer cannot be deleted.")
     layer = _layer(name)
-    nodes = list(rt.atbLayerNodes(layer))
+    nodes = list(rt.zaslehLayerNodes(layer))
     if layer.current:
         rt.LayerManager.getLayer(0).current = True
     if nodes:
@@ -108,7 +108,7 @@ def show_all() -> None:
 
 def describe(name: str) -> str:
     resolution = lods.lod_resolution(name.split(" [")[0])
-    return atb_p3d.lod_name(resolution) if resolution is not None else ""
+    return formats.lod_name(resolution) if resolution is not None else ""
 
 
 def properties(name: str) -> list:

@@ -1,7 +1,7 @@
 import pymxs
 from PySide2 import QtWidgets
 
-import atb_p3d
+from zasleh import formats
 
 from .. import exporter, memory
 from ..scene import layer_resolution
@@ -86,7 +86,7 @@ class MemoryTab(QtWidgets.QWidget):
         for candidate in exporter.candidate_layers(include_empty=True):
             found = rt.LayerManager.getLayerFromName(candidate["layer"])
             resolution = layer_resolution(found)
-            if resolution is not None and atb_p3d.is_point_lod(resolution) and candidate["layer"] not in names:
+            if resolution is not None and formats.is_point_lod(resolution) and candidate["layer"] not in names:
                 names.append(candidate["layer"])
         self.layer.blockSignals(True)
         self.layer.clear()

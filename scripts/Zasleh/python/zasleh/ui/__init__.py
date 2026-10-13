@@ -36,7 +36,7 @@ def show():
             _dock(main, _panel)
         rt.callbacks.removeScripts(id=rt.Name(_CALLBACK))
         rt.callbacks.addScript(rt.Name("selectionSetChanged"),
-                               "python.Execute \"import atb_max.ui as u; u.selection_changed()\"",
+                               "python.Execute \"import zasleh.ui as u; u.selection_changed()\"",
                                id=rt.Name(_CALLBACK))
     _panel.show()
     _panel.raise_()

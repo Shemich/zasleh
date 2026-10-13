@@ -12,10 +12,10 @@ from typing import Dict, List, Optional, Tuple
 
 import pymxs
 
-import atb_p3d
-from atb_p3d import WEIGHT_OF_BYTE, paa
-from atb_p3d.flags import POINT_SPECIAL_LOCKNORMAL
-from atb_p3d.meshprep import MeshData, Slot, face_uvs, flag_code, prepare, to_scene
+from zasleh import formats
+from zasleh.formats import WEIGHT_OF_BYTE, paa
+from zasleh.formats.flags import POINT_SPECIAL_LOCKNORMAL
+from zasleh.formats.meshprep import MeshData, Slot, face_uvs, flag_code, prepare, to_scene
 
 from . import bulk, scene, settings
 from . import registry as reg
@@ -26,7 +26,7 @@ rt = pymxs.runtime
 
 TO_BOOL = bytes([0] + [1] * 255)
 # a LOD with this many loose points gets them as one mesh, not as helpers
-CLOUD_FROM = int(os.environ.get("ATB_CLOUD_FROM", "1000"))
+CLOUD_FROM = int(os.environ.get("ZASLEH_CLOUD_FROM", "1000"))
 
 timing: Dict[str, float] = {}       # seconds per stage of the last import, for the report
 
@@ -42,7 +42,7 @@ class _Timed:
         timing[self.stage] = timing.get(self.stage, 0.0) + time.perf_counter() - self.started
 
 _MAXSCRIPT = r'''
-fn atbBuildMesh verts tris quads matIds groups objName =
+fn zaslehBuildMesh verts tris quads matIds groups objName =
 (
     local m = mesh vertices:verts faces:tris name:objName
     for q in quads do
@@ -57,7 +57,7 @@ fn atbBuildMesh verts tris quads matIds groups objName =
     )
     m
 )
-fn atbSetChannel m ch mverts mtris =
+fn zaslehSetChannel m ch mverts mtris =
 (
     if (meshop.getNumMaps m) <= ch do meshop.setNumMaps m (ch + 1) keep:true
     meshop.setMapSupport m ch true
@@ -66,7 +66,7 @@ fn atbSetChannel m ch mverts mtris =
     for f = 1 to mtris.count do meshop.setMapFace m ch f mtris[f]
 )
 -- A data channel given as changes to the plain one: a map vert per mesh vert, all zero
-fn atbSetSparseChannel m ch baseIdx baseVals extraVals triIdx triVals =
+fn zaslehSetSparseChannel m ch baseIdx baseVals extraVals triIdx triVals =
 (
     if (meshop.getNumMaps m) <= ch do meshop.setNumMaps m (ch + 1) keep:true
     meshop.setMapSupport m ch true
@@ -207,8 +207,8 @@ class _Materials:
         if colour:                                   # "#(argb,8,8,3)color(r,g,b,a,co)": a plain colour
             red, green, blue = (min(1.0, float(value)) * 255.0 for value in colour.groups())
             material.base_color = rt.Color(red, green, blue)
-        rt.custAttributes.add(material, rt.atbArmaMaterialCA)
-        attributes = rt.custAttributes.get(material, rt.atbArmaMaterialCA)
+        rt.custAttributes.add(material, rt.zaslehArmaMaterialCA)
+        attributes = rt.custAttributes.get(material, rt.zaslehArmaMaterialCA)
         attributes.texture = texture
         attributes.rvmat = rvmat
         return material, name
@@ -241,7 +241,7 @@ def _layer_for(name: str, model: str):
         layer = manager.getLayerFromName(candidate)
         if layer is None:
             return manager.newLayerFromName(candidate)
-        if int(rt.atbLayerNodes(layer).count) == 0:
+        if int(rt.zaslehLayerNodes(layer).count) == 0:
             return layer
         candidate = "%s [%s]" % (name, model) if counter == 1 else "%s [%s %d]" % (name, model, counter)
         counter += 1
@@ -476,7 +476,7 @@ def _fill_fast(node, lod, mesh: MeshData, global_ids: List[int], slot_table: lis
 def _fill_slow(lod, mesh: MeshData, name: str, global_ids: List[int], slot_table: list,
                info: dict, warnings: List[str]):
     """The same mesh through MAXScript, an element at a time"""
-    node = rt.atbBuildMesh(
+    node = rt.zaslehBuildMesh(
         _points3(mesh.verts), _triangles(mesh.tris), [quad + 1 for quad in mesh.quads],
         [global_ids[local - 1] for local in mesh.mat_ids],
         [group - 0x100000000 if group >= 0x80000000 else group for group in mesh.groups],
@@ -489,13 +489,13 @@ def _fill_slow(lod, mesh: MeshData, name: str, global_ids: List[int], slot_table
         if not any(u or v for face in mesh.faces for u, v in per_face[face]):
             continue                                   # all zero (geometry LODs): nothing to keep
         channel = mesh.uv_channel(per_face)
-        rt.atbSetChannel(node, set_index + 1, _points3(channel.verts), _triangles(channel.tris))
+        rt.zaslehSetChannel(node, set_index + 1, _points3(channel.verts), _triangles(channel.tris))
         written.add(set_index + 1)
     point3 = rt.Point3
     for channel_index, slots in slot_table:
         sparse = mesh.sparse_channel(slots)
         changed = sorted(sparse.tris.items())
-        rt.atbSetSparseChannel(
+        rt.zaslehSetSparseChannel(
             node, channel_index,
             [vertex + 1 for vertex in sparse.base], [point3(*value) for value in sparse.base.values()],
             [point3(*value) for value in sparse.extra],
@@ -549,7 +549,7 @@ def _build_mesh(lod, mesh: MeshData, name: str, registry: reg.Registry, material
         warnings.append("%s: %d quad(s) became two triangles each (3ds Max could not join them)"
                         % (info["lod"], info["mesh_faces"] - len(mesh.faces)))
     # the object itself isn't a selection (the exporter reads this)
-    rt.setUserProp(node, "atb_nosel", True)
+    rt.setUserProp(node, "zasleh_nosel", True)
     materials.nodes.append(node)
     return node
 
@@ -572,25 +572,25 @@ def _build_helpers(lod, loose: List[int], layer, info: dict) -> None:
         node = rt.Point(pos=rt.Point3(*to_scene(lod.points[point])), name=names[0] if names else UNNAMED_POINT,
                         size=10, centermarker=True, axistripod=False, cross=False, box=False,
                         constantscreensize=True, wirecolor=red)
-        rt.setUserProp(node, "atb_point", point + 1)        # its place in the file, kept on export
+        rt.setUserProp(node, "zasleh_point", point + 1)        # its place in the file, kept on export
         if not names:
-            rt.setUserProp(node, "atb_nosel", True)
+            rt.setUserProp(node, "zasleh_nosel", True)
         elif any(byte != 1 for byte in bytes_at[point]):
             # weighted: [name, weight byte] pairs
-            rt.setUserProp(node, "atb_sels", json.dumps([list(pair) for pair in zip(names, bytes_at[point])]))
+            rt.setUserProp(node, "zasleh_sels", json.dumps([list(pair) for pair in zip(names, bytes_at[point])]))
         elif len(names) > 1:
-            rt.setUserProp(node, "atb_sels", json.dumps(names))
+            rt.setUserProp(node, "zasleh_sels", json.dumps(names))
         if lod.point_flags[point]:
-            rt.setUserProp(node, "atb_flags", lod.point_flags[point])
+            rt.setUserProp(node, "zasleh_flags", lod.point_flags[point])
         if masses is not None and masses[point]:
-            rt.setUserProp(node, "atb_mass", masses[point])
+            rt.setUserProp(node, "zasleh_mass", masses[point])
         layer.addNode(node)
     info["helpers"] = len(loose)
 
 
 def _import_lod(lod, model: str, registry: reg.Registry, materials: _Materials, warnings: List[str],
                 face_ids: bool = True) -> dict:
-    name = atb_p3d.lod_name(lod.resolution)
+    name = formats.lod_name(lod.resolution)
     layer = _layer_for(name, model)
     info = {"lod": name, "layer": str(layer.name), "points": len(lod.points), "faces": len(lod.faces)}
     with _Timed("prepare"):
@@ -622,7 +622,7 @@ def import_p3d(path: str, tex_root: Optional[str] = None, preview: Optional[bool
     started = time.perf_counter()
     timing.clear()
     with _Timed("read"):
-        p3d = atb_p3d.read(path)
+        p3d = formats.read(path)
     define_maxscript()
     model = os.path.splitext(os.path.basename(path))[0]
     registry = reg.Registry.load()
@@ -639,7 +639,7 @@ def import_p3d(path: str, tex_root: Optional[str] = None, preview: Optional[bool
         registry.save()
     report["materials"] = len(materials.pairs)
     report["fast"] = bulk.available()
-    if not report["fast"] and os.environ.get("ATB_BULK") != "0":
+    if not report["fast"] and os.environ.get("ZASLEH_BULK") != "0":
         report["warnings"].append("the fast mesh builder could not be used, so the import took the slow way (%s)"
                                   % bulk.error.replace("\n", " ")[:200])
     report["previews"] = materials.previews

@@ -4,9 +4,9 @@ import copy
 import math
 import unittest
 
-from atb_p3d import LOD, P3D, Face, Selection, SharpEdges, UVSet, dumps, loads, normals
-from atb_p3d.compare import diff_lods, diff_models
-from atb_p3d.flags import FACE_FLATLIGHT, FACE_REVERSELIGHT, POINT_SPECIAL_LOCKNORMAL
+from zasleh.formats import LOD, P3D, Face, Selection, SharpEdges, UVSet, dumps, loads, normals
+from zasleh.formats.compare import diff_lods, diff_models
+from zasleh.formats.flags import FACE_FLATLIGHT, FACE_REVERSELIGHT, POINT_SPECIAL_LOCKNORMAL
 
 
 def grid_lod(columns=2, rows=1, sharp=()):

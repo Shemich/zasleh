@@ -9,7 +9,7 @@ from typing import List, Tuple
 
 import pymxs
 
-from atb_p3d import rvmat
+from zasleh.formats import rvmat
 
 from .scene import PREVIEW_EXTENSIONS, define_maxscript, to_bits
 
@@ -92,7 +92,7 @@ def arma_attributes(material):
     """(texture, rvmat) of a material imported from a p3d, None for any other"""
     if material is None:
         return None
-    definition = rt.execute("try (atbArmaMaterialCA) catch (undefined)")
+    definition = rt.execute("try (zaslehArmaMaterialCA) catch (undefined)")
     if definition is None:
         return None
     attributes = rt.custAttributes.get(material, definition)
@@ -243,7 +243,7 @@ class TexturePlan:
                     counts["failed"] += 1
                     self.notes.append("%s not deployed: set ImageToPAA.exe to convert it to .paa" % os.path.basename(source))
                 elif needs_paa and extension == ".dds" and have_conv:
-                    tmp = os.path.join(folder, "__atb_tmp")
+                    tmp = os.path.join(folder, "__zasleh_tmp")
                     os.makedirs(tmp, exist_ok=True)
                     tga = os.path.join(tmp, os.path.splitext(os.path.basename(source))[0] + ".tga")
                     _run([self.tex_conv, "-nologo", "-y", "-ft", "tga", "-f", "R8G8B8A8_UNORM", "-o", tmp, source],
@@ -382,18 +382,18 @@ def derived(material, tex_root: str) -> Tuple[str, str]:
 def set_arma(material, texture: str, rvmat_path: str) -> None:
     """Paths that go into the p3d as they are, whatever maps the material has"""
     define_maxscript()
-    if rt.custAttributes.get(material, rt.atbArmaMaterialCA) is None:
-        rt.custAttributes.add(material, rt.atbArmaMaterialCA)
-    attributes = rt.custAttributes.get(material, rt.atbArmaMaterialCA)
+    if rt.custAttributes.get(material, rt.zaslehArmaMaterialCA) is None:
+        rt.custAttributes.add(material, rt.zaslehArmaMaterialCA)
+    attributes = rt.custAttributes.get(material, rt.zaslehArmaMaterialCA)
     attributes.texture = texture
     attributes.rvmat = rvmat_path
 
 
 def clear_arma(material) -> bool:
     define_maxscript()
-    if rt.custAttributes.get(material, rt.atbArmaMaterialCA) is None:
+    if rt.custAttributes.get(material, rt.zaslehArmaMaterialCA) is None:
         return False
-    rt.custAttributes.delete(material, rt.atbArmaMaterialCA)
+    rt.custAttributes.delete(material, rt.zaslehArmaMaterialCA)
     return True
 
 

@@ -34,17 +34,22 @@ Needs 3ds Max 2024 and nothing else. More in the [documentation](https://shemich
 ## For developers
 
 ```
-scripts/Zasleh/python/atb_p3d    file formats, no 3ds Max needed: p3d, paa, rvmat, model.cfg
-scripts/Zasleh/python/atb_max    the scene: import, export, selections, materials...
-scripts/Zasleh/python/atb_max/ui the Qt panel, a file per tab
-scripts/Zasleh/python/tests      unit tests, and checks that run inside 3ds Max without its UI
-docs/                            the documentation site
+scripts/Zasleh/python/zasleh/formats  file formats, no 3ds Max needed: p3d, paa, rvmat, model.cfg
+scripts/Zasleh/python/zasleh          the scene: import, export, selections, materials...
+scripts/Zasleh/python/zasleh/ui       the Qt panel, a file per tab
+scripts/Zasleh/python/tests           unit tests, and checks that run inside 3ds Max without its UI
+docs/                                 the documentation site
 ```
 
     cd scripts\Zasleh\python
     python -m unittest discover -s tests -t .
-    python -m atb_p3d info model.p3d
-    python -m atb_p3d diff a.p3d b.p3d
+    python -m zasleh.formats info model.p3d
+    python -m zasleh.formats diff a.p3d b.p3d
+
+## License
+
+Copyright (C) 2026 Shemich. Zasleh is free software under the GNU General Public License v3.0:
+you may use, change and share it, and what you build on it has to stay open too. See [LICENSE](LICENSE).
 
 ## Thanks
 

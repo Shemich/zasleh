@@ -33,5 +33,5 @@ def default_texture_root() -> str:
 def scratch_folder(name: str, tex_root: str) -> str:
     """Where the toolbox keeps files it makes for itself: under the texture root, else in the user's profile"""
     if tex_root and os.path.isdir(tex_root):
-        return os.path.join(tex_root, "temp", "atb_" + name)
+        return os.path.join(tex_root, "temp", "zasleh_" + name)
     return os.path.join(os.environ.get("LOCALAPPDATA") or os.path.expanduser("~"), "Zasleh", name)

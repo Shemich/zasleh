@@ -4,11 +4,11 @@ import re
 
 import pymxs
 
-import atb_p3d
+from zasleh import formats
 
 from . import exporter, groups
 from . import registry as reg
-from .scene import layer_info, layer_resolution
+from .scene import layer_info, layer_resolution, user_prop
 from .memory import names_of
 
 rt = pymxs.runtime
@@ -27,8 +27,8 @@ def scene_names() -> tuple:
             continue
         layer = rt.LayerManager.getLayerFromName(candidate["layer"])
         resolution = layer_resolution(layer)
-        target = memory if atb_p3d.lod_name(resolution) == "Memory" else names
-        for node in rt.atbLayerNodes(layer):
+        target = memory if formats.lod_name(resolution) == "Memory" else names
+        for node in rt.zaslehLayerNodes(layer):
             if rt.classOf(node) == rt.Point:
                 target.update(names_of(node))
             elif rt.superClassOf(node) == rt.GeometryClass:
@@ -37,7 +37,7 @@ def scene_names() -> tuple:
                     if listed is None:
                         listed = groups.groups_on(node, registry, rescan=True)
                     target.update(listed)
-                if rt.getUserProp(node, "atb_nosel") is not True:
+                if user_prop(node, "nosel") is not True:
                     target.add(str(node.name))
     clean = lambda found: sorted((n for n in found if n and not _SKIP.match(n)), key=str.lower)     # noqa: E731
     return clean(names), clean(memory)

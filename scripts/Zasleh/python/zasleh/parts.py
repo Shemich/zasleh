@@ -10,7 +10,7 @@ import pymxs
 
 from . import bulk, groups
 from . import registry as reg
-from .scene import PROXY_PREFIX, define_maxscript, layer_info, layers, to_bits
+from .scene import PROXY_PREFIX, define_maxscript, layer_info, layers, to_bits, user_prop
 
 rt = pymxs.runtime
 
@@ -79,8 +79,8 @@ def split(node, registry: reg.Registry, names: List[str], layer=None) -> list:
         part.name = name                            # 3ds Max numbers a name another LOD has already
         part.material = node.material
         part.wirecolor = node.wirecolor
-        rt.setUserProp(part, "atb_nosel", True)     # the selection is in the map channels, as in the LOD's mesh
-        rt.setUserProp(part, "atb_part", name)
+        rt.setUserProp(part, "zasleh_nosel", True)     # the selection is in the map channels, as in the LOD's mesh
+        rt.setUserProp(part, "zasleh_part", name)
         (layer or node.layer).addNode(part)
         made.append(part)
         taken.update(faces)
@@ -102,8 +102,8 @@ def split_layer(layer, registry: reg.Registry, patterns: Iterable[str]) -> int:
     names = matching(layer_info(layer).get("selections", []), patterns)
     count = 0
     if names:
-        for node in list(rt.atbLayerNodes(layer)):
-            whole = rt.getUserProp(node, "atb_part") is None          # a part isn't split again
+        for node in list(rt.zaslehLayerNodes(layer)):
+            whole = user_prop(node, "part") is None          # a part isn't split again
             if whole and rt.classOf(node.baseobject) == rt.Editable_Poly and int(node.modifiers.count) == 0:
                 count += len(split(node, registry, names, layer))
     return count
@@ -146,8 +146,8 @@ def by_bones(bones: List[Tuple[str, str]]) -> Tuple[Dict[str, int], int]:
     with pymxs.undo(False):
         for layer in layers():
             found = {}
-            for node in rt.atbLayerNodes(layer):
-                part = rt.getUserProp(node, "atb_part")
+            for node in rt.zaslehLayerNodes(layer):
+                part = user_prop(node, "part")
                 if part is not None:
                     found.setdefault(str(part).lower(), node)
             for name, node in found.items():

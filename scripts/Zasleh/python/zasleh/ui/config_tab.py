@@ -3,8 +3,8 @@ import os
 import pymxs
 from PySide2 import QtCore, QtWidgets
 
-from atb_p3d import modelcfg
-from atb_p3d.modelcfg import Animation, ModelCfg
+from zasleh.formats import modelcfg
+from zasleh.formats.modelcfg import Animation, ModelCfg
 
 from .. import parts, settings, skeleton
 from .. import registry as reg

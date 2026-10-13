@@ -3,14 +3,14 @@ import shutil
 import tempfile
 import unittest
 
-import atb_p3d
-from atb_p3d import LOD, Face, P3D, Selection
-from atb_p3d.__main__ import main, selection_names
+from zasleh import formats
+from zasleh.formats import LOD, Face, P3D, Selection
+from zasleh.formats.__main__ import main, selection_names
 
 
 class NamesTest(unittest.TestCase):
     def setUp(self):
-        self.folder = tempfile.mkdtemp(prefix="atb_names_")
+        self.folder = tempfile.mkdtemp(prefix="zasleh_names_")
         self.addCleanup(shutil.rmtree, self.folder, True)
         model = P3D()
         for resolution, names in ((1.0, ["otocvez", "Component01", "proxy:\\a3\\x.001", "-sel", "Box029", "camo1"]),
@@ -23,7 +23,7 @@ class NamesTest(unittest.TestCase):
             lod.taggs += [Selection(name, bytes([1, 1, 1]), bytes([1])) for name in names]
             model.lods.append(lod)
         self.path = os.path.join(self.folder, "tank.p3d")
-        atb_p3d.write(model, self.path)
+        formats.write(model, self.path)
 
     def test_names_of_all_lods_once_without_what_is_no_name(self):
         self.assertEqual(selection_names([self.path]), ["camo1", "otocvez", "zbytek"])

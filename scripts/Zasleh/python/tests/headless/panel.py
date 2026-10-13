@@ -17,9 +17,9 @@ def check(name, condition, detail=None):
 
 try:
     sys.path.insert(0, os.path.join(str(rt.getDir(rt.Name("scripts"))), "Zasleh", "python"))
-    import atb_p3d
-    from atb_p3d import LOD, P3D, Face
-    import atb_max.ui as ui
+    from zasleh import formats
+    from zasleh.formats import LOD, P3D, Face
+    import zasleh.ui as ui
     from PySide2 import QtCore
 
     rt.resetMaxFile(rt.Name("noPrompt"))
@@ -95,9 +95,9 @@ try:
     tab.do("mass_get")
     check("mass: set, then get fills the field", abs(tab.mass.value() - 80.0) < 0.05, [tab.mass.value(), tab.status.text()])
     # texture and rvmat of a selection's faces: shown on a click, given with Set
-    from atb_max import exporter as face_exporter, selections as face_selections
-    from atb_max import groups as face_groups, materials as face_materials_module, importer as face_importer
-    from atb_max import registry as face_reg
+    from zasleh import exporter as face_exporter, selections as face_selections
+    from zasleh import groups as face_groups, materials as face_materials_module, importer as face_importer
+    from zasleh import registry as face_reg
     registry = face_reg.Registry.load()
     face_groups.assign(plane, registry, "everywhere", 1.0, "faces", list(range(1, 17)))
     face_groups.assign(plane, registry, "strip", 1.0, "faces", [1, 2, 3, 4])
@@ -155,7 +155,7 @@ try:
     tab.do("clear", "strip")
     tab.do("clear", "everywhere")
     plane.material = None
-    from atb_max.ui.selections_tab import known_names
+    from zasleh.ui.selections_tab import known_names
     check("names offered while typing: the scene's, and the chosen name set's",
           {"alpha", "everywhere"} <= set(known_names()) and "otocVez" not in known_names() and
           {"alpha", "otocVez", "koloL1"} <= set(known_names("tank")), known_names()[:12])
@@ -179,14 +179,14 @@ try:
     tab.do("clear", "otocVez")
     tab.name_set.setCurrentIndex(0)
     check("name set: without one the list is the object's own again", listed() == before and tab.offered == [], listed())
-    from atb_max import settings as kept_settings
+    from zasleh import settings as kept_settings
     kept_settings.put("nameSet", kept_set if tab.name_set.findText(kept_set) > 0 else "")   # the widget stays on "none"
     rt.clearSelection()
     ui.selection_changed()
     check("nothing selected: the list empties by itself", tab.object_label.text().startswith("Object: (select") and listed() == [])
 
     # -- Model: import a small p3d, export it again
-    work = os.path.join(os.environ["ATB_TMP"], "atb_panel_test")
+    work = os.path.join(os.environ["ZASLEH_TMP"], "zasleh_panel_test")
     shutil.rmtree(work, ignore_errors=True)
     os.makedirs(work)
     model = P3D()
@@ -198,7 +198,7 @@ try:
                               texture="proj\\data\\a_co.paa", material=""))
     model.lods.append(lod)
     source = os.path.join(work, "in.p3d")
-    atb_p3d.write(model, source)
+    formats.write(model, source)
 
     rt.resetMaxFile(rt.Name("noPrompt"))
     tab = panel.model
@@ -214,7 +214,7 @@ try:
     target = os.path.join(work, "out.p3d")
     check("export", tab.export_file(target) and os.path.isfile(target) and "out.p3d: 1 LOD(s)" in panel.log.toPlainText(),
           panel.log.toPlainText())
-    again = atb_p3d.read(target)
+    again = formats.read(target)
     check("what was exported is what was imported", len(again.lods) == 1 and again.lods[0].faces[0].points == (0, 1, 2, 3) and
           again.lods[0].faces[0].texture == "proj\\data\\a_co.paa")
     for i in range(tab.layers.count()):
@@ -226,9 +226,9 @@ try:
     lod.points += [(5.0, 0.0, 0.0), (5.0, 1.0, 0.0), (5.0, 0.0, 1.0)]
     lod.point_flags = [0] * 7
     lod.faces.insert(0, Face.new((4, 5, 6), (0, 0, 0), ((0.0, 0.0),) * 3, texture="", material=""))
-    lod.taggs.append(atb_p3d.Selection("proxy:\\a3\\x\\gunner.001", bytes([0, 0, 0, 0, 1, 1, 1]), bytes([1, 0])))
+    lod.taggs.append(formats.Selection("proxy:\\a3\\x\\gunner.001", bytes([0, 0, 0, 0, 1, 1, 1]), bytes([1, 0])))
     proxied = os.path.join(work, "proxied.p3d")
-    atb_p3d.write(model, proxied)
+    formats.write(model, proxied)
     rt.resetMaxFile(rt.Name("noPrompt"))
     tab.split_proxies.setChecked(True)
     panel.log.clear()
@@ -237,8 +237,8 @@ try:
           sorted(str(n.name) for n in rt.objects) == ["proxied_1", "proxy:\\a3\\x\\gunner.001"],
           [panel.log.toPlainText(), [str(n.name) for n in rt.objects]])
     check("... and the export puts the proxy back where it was in the file",
-          tab.export_file(target) and [f.points for f in atb_p3d.read(target).lods[0].faces] == [(4, 5, 6), (0, 1, 2, 3)],
-          [f.points for f in atb_p3d.read(target).lods[0].faces])
+          tab.export_file(target) and [f.points for f in formats.read(target).lods[0].faces] == [(4, 5, 6), (0, 1, 2, 3)],
+          [f.points for f in formats.read(target).lods[0].faces])
     # a binarized model goes through the debinarizer; a batch file stands in for it
     binarized = os.path.join(work, "bin", "in.p3d")
     os.makedirs(os.path.dirname(binarized))
@@ -281,7 +281,7 @@ try:
     answers.append("Geometry")
     tab.lod("add")
     check("lods: a name that is taken is refused", "already is a layer" in panel.log.toPlainText())
-    from atb_max import lodtools
+    from zasleh import lodtools
     pick("Geometry")
     tab.ask_lines = lambda title, initial="": "class = house\nautocenter=0;  map = house"
     tab.lod("properties")
@@ -296,7 +296,7 @@ try:
           len(lodtools.properties("Geometry")) == 3, [seen, lodtools.properties("Geometry")])
     box = rt.convertToPoly(rt.Box(name="geo_box"))
     rt.LayerManager.getLayerFromName("Geometry").addNode(box)
-    from atb_max import exporter as exp0
+    from zasleh import exporter as exp0
     written = exp0.build_model(["Geometry"])[0].lods[0]
     check("lods: the properties are written to the p3d", [(p.key, p.value) for p in written.properties] ==
           [("class", "house"), ("autocenter", "0"), ("map", "house")], [(p.key, p.value) for p in written.properties])
@@ -305,8 +305,8 @@ try:
     answers.append("2")
     tab.lod("duplicate")
     two = rt.LayerManager.getLayerFromName("2")
-    copies = list(rt.atbLayerNodes(two)) if two is not None else []
-    from atb_max import exporter as exp
+    copies = list(rt.zaslehLayerNodes(two)) if two is not None else []
+    from zasleh import exporter as exp
     made = exp.build_model(["1", "2"])[0]
     check("lods: duplicate copies the objects with their data", len(copies) == 1 and len(made.lods) == 2 and
           made.lods[1].faces[0].points == made.lods[0].faces[0].points and
@@ -355,8 +355,8 @@ try:
     check("options come from the widgets", options.convert_paa and not options.gen_rvmat and not options.deploy and
           options.deploy_dir != "", options)
     # -- Memory points
-    from atb_max import memory
-    from atb_max import exporter as exp
+    from zasleh import memory
+    from zasleh import exporter as exp
     rt.resetMaxFile(rt.Name("noPrompt"))
     tab = panel.memory
     panel.tabs.setCurrentWidget(tab)
@@ -427,14 +427,14 @@ try:
     # -- Materials
     rt.resetMaxFile(rt.Name("noPrompt"))
     tab = panel.materials
-    work = os.path.join(os.environ["ATB_TMP"], "atb_panel_test")
+    work = os.path.join(os.environ["ZASLEH_TMP"], "zasleh_panel_test")
     shutil.rmtree(work, ignore_errors=True)
     os.makedirs(os.path.join(work, "root", "data"))
     os.makedirs(os.path.join(work, "elsewhere"))
     for name in (os.path.join("root", "data", "hull_co.png"), os.path.join("root", "data", "hull_nohq.png"),
                  os.path.join("root", "data", "hull_smdi.png"), os.path.join("root", "data", "gun_co.png"),
                  os.path.join("elsewhere", "far_co.png")):
-        atb_p3d.paa.write_png(os.path.join(work, name), 1, 1, b"\x10\x20\x30")
+        formats.paa.write_png(os.path.join(work, name), 1, 1, b"\x10\x20\x30")
 
     def with_material(name, colour=None, normal=None, specular=None, x=0.0):
         material = rt.Standardmaterial(name=name)
@@ -473,8 +473,8 @@ try:
     check("materials: replace without a find text says so", tab.replace(True) == 0 and "fill the find field" in panel.log.toPlainText())
 
     # maps lying next to the colour map; .rvmat files; paths of a material's own
-    from atb_max import exporter, materials, settings
-    atb_p3d.paa.write_png(os.path.join(work, "root", "data", "gun_nohq.png"), 1, 1, b"\x80\x80\xff")
+    from zasleh import exporter, materials, settings
+    formats.paa.write_png(os.path.join(work, "root", "data", "gun_nohq.png"), 1, 1, b"\x80\x80\xff")
     with open(os.path.join(work, "root", "data", "gun_smdi.paa"), "wb") as stream:
         stream.write(b"not a real paa")
     tab.scan()
@@ -534,9 +534,9 @@ try:
     shutil.rmtree(work, ignore_errors=True)
 
     # -- Config: bones from the scene, an animation, model.cfg out and in again
-    from atb_p3d import modelcfg
-    from atb_max import groups
-    from atb_max import registry as reg
+    from zasleh.formats import modelcfg
+    from zasleh import groups
+    from zasleh import registry as reg
     rt.resetMaxFile(rt.Name("noPrompt"))
     tab = panel.config
     panel.tabs.setCurrentWidget(tab)
@@ -556,7 +556,7 @@ try:
     registry.save()
     memory = rt.LayerManager.newLayerFromName("Memory")
     memory.addNode(rt.Point(name="axis_turret"))
-    from atb_max import skeleton
+    from zasleh import skeleton
     names, points = skeleton.scene_names()
     check("config: names from the scene", names == ["camo1", "gun", "hull", "turret"] and points == ["axis_turret"], [names, points])
     tab.from_selections()
@@ -583,7 +583,7 @@ try:
     text = tab.preview()
     check("config: preview", 'class t34 : Default' in text and '"gun", "hull"' in text and 'angle1 = "rad 360";' in text and
           "hideValue = 0.5;" in text and '"camo1",' in text and text in panel.log.toPlainText(), text[:300])
-    work = os.path.join(os.environ["ATB_TMP"], "atb_panel_test")
+    work = os.path.join(os.environ["ZASLEH_TMP"], "zasleh_panel_test")
     os.makedirs(work, exist_ok=True)
     saved = os.path.join(work, "model.cfg")
     before = tab.collect()
@@ -606,8 +606,8 @@ try:
     check("config: a broken file is reported, the tab keeps what it had",
           not tab.load_file(saved) and "not read" in panel.log.toPlainText() and tab.collect() == before)
     # -- Multi-structure: two parts, a memory point each, a p3d each around its own origin
-    from atb_max import multistruct
-    from atb_max import memory as memory_points
+    from zasleh import multistruct
+    from zasleh import memory as memory_points
     rt.resetMaxFile(rt.Name("noPrompt"))
     tab = panel.multi
     panel.tabs.setCurrentWidget(tab)
@@ -635,7 +635,7 @@ try:
     check("multi: centre and restore", moved == (0.0, 0.0, 0.0) and back == (10.0, 0.0, 1.0), [moved, back])
     tab.verify()
     check("multi: verify writes to the log", "Multi-structure check:" in panel.log.toPlainText() and "point ok" in panel.log.toPlainText())
-    work = os.path.join(os.environ["ATB_TMP"], "atb_panel_test")
+    work = os.path.join(os.environ["ZASLEH_TMP"], "zasleh_panel_test")
     os.makedirs(work, exist_ok=True)
     tab.geometry.setChecked(True)
     tab.geo_props.setText("class=house; sbsource=shadowvolume")
@@ -643,8 +643,8 @@ try:
     objects_before = len(list(rt.objects))
     layers_before = int(rt.LayerManager.count)
     report = tab.export_to(work)
-    first = atb_p3d.read(os.path.join(work, "PART1.p3d")) if os.path.isfile(os.path.join(work, "PART1.p3d")) else None
-    second = atb_p3d.read(os.path.join(work, "PART2.p3d")) if os.path.isfile(os.path.join(work, "PART2.p3d")) else None
+    first = formats.read(os.path.join(work, "PART1.p3d")) if os.path.isfile(os.path.join(work, "PART1.p3d")) else None
+    second = formats.read(os.path.join(work, "PART2.p3d")) if os.path.isfile(os.path.join(work, "PART2.p3d")) else None
     check("multi: one p3d per part", report["ok"] == ["PART1", "PART2"] and not report["failed"] and
           report["no_geometry"] == ["PART2"], report)
 
@@ -657,7 +657,7 @@ try:
           extent(second.lods[0]) == [-1.0, -1.0, -1.0, 1.0, 1.0, 1.0], [first and extent(first.lods[0])])
     geo = first.lods[1] if first is not None and len(first.lods) == 2 else None
     check("multi: the Geometry LOD comes along, moved the same way, with its properties and mass",
-          geo is not None and atb_p3d.lod_name(geo.resolution) == "Geometry" and extent(geo) == [-1.0, -1.0, -1.0, 1.0, 1.0, 1.0] and
+          geo is not None and formats.lod_name(geo.resolution) == "Geometry" and extent(geo) == [-1.0, -1.0, -1.0, 1.0, 1.0, 1.0] and
           geo.get_property("class") == "house" and geo.get_property("autocenter") == "0" and
           abs(sum(geo.mass) - 400.0) < 0.01 and len(second.lods) == 1, geo and [geo.properties, sum(geo.mass or [])])
     check("multi: the scene is left as it was", len(list(rt.objects)) == objects_before and
@@ -672,5 +672,5 @@ except Exception as error:  # noqa: BLE001
     out["ok"] = False
     out["error"] = "%s: %s" % (type(error).__name__, error)
     out["trace"] = traceback.format_exc()
-with open(os.environ["ATB_OUT"], "w", encoding="utf-8") as stream:
+with open(os.environ["ZASLEH_OUT"], "w", encoding="utf-8") as stream:
     json.dump(out, stream, indent=1, default=str)

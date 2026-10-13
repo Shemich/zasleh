@@ -18,12 +18,12 @@ def check(name, condition, detail=None):
 
 try:
     sys.path.insert(0, os.path.join(str(rt.getDir(rt.Name("scripts"))), "Zasleh", "python"))
-    import atb_p3d
-    from atb_p3d import LOD, P3D, Face
-    from atb_max import exporter, importer
+    from zasleh import formats
+    from zasleh.formats import LOD, P3D, Face
+    from zasleh import exporter, importer
     from tests import paa_samples
 
-    work = os.path.join(os.environ["ATB_TMP"], "atb_preview_test")
+    work = os.path.join(os.environ["ZASLEH_TMP"], "zasleh_preview_test")
     shutil.rmtree(work, ignore_errors=True)
     cache = os.path.join(work, "cache")
     os.makedirs(os.path.join(work, "proj", "data"))
@@ -46,7 +46,7 @@ try:
     lod.normals = [(0.0, 1.0, 0.0)]
     model.lods.append(lod)
     path = os.path.join(work, "model.p3d")
-    atb_p3d.write(model, path)
+    formats.write(model, path)
 
     def imported(**options):
         rt.resetMaxFile(rt.Name("noPrompt"))
@@ -54,7 +54,7 @@ try:
         node = [n for n in rt.objects if rt.classOf(n) == rt.Editable_Poly][0]
         found = {}
         for material in node.material.materialList:
-            attributes = rt.custAttributes.get(material, rt.atbArmaMaterialCA)
+            attributes = rt.custAttributes.get(material, rt.zaslehArmaMaterialCA)
             bitmap = material.base_color_map
             colour = material.base_color
             found[str(attributes.texture)] = (str(bitmap.filename) if bitmap is not None else None,
@@ -81,11 +81,11 @@ try:
     report, found = imported(preview=False)
     check("previews can be turned off", found[HULL][0] is None and report["previews"] == 0, found[HULL])
     source = os.path.join(work, "proj", "data", "hull_co.png")
-    atb_p3d.paa.write_png(source, 1, 1, b"\x10\x20\x30")
+    formats.paa.write_png(source, 1, 1, b"\x10\x20\x30")
     report, found = imported(preview=True)
     check("a source picture next to the .paa is preferred", found[HULL][0] == source, found[HULL])
     # a texture of the game: not under the project's root, found under the game data folder
-    from atb_max import settings
+    from zasleh import settings
     game = os.path.join(work, "game")
     os.makedirs(os.path.join(game, "proj", "data"))
     os.replace(os.path.join(work, "proj", "data", "hull_co.paa"), os.path.join(game, "proj", "data", "hull_co.paa"))
@@ -104,5 +104,5 @@ except Exception as error:  # noqa: BLE001
     out["ok"] = False
     out["error"] = "%s: %s" % (type(error).__name__, error)
     out["trace"] = traceback.format_exc()
-with open(os.environ["ATB_OUT"], "w", encoding="utf-8") as stream:
+with open(os.environ["ZASLEH_OUT"], "w", encoding="utf-8") as stream:
     json.dump(out, stream, indent=1, default=str)

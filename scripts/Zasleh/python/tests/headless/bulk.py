@@ -1,4 +1,4 @@
-"""The bulk helper (atb_max/bulk.py), in headless 3ds Max: it builds"""
+"""The bulk helper (zasleh/bulk.py), in headless 3ds Max: it builds"""
 import json
 import os
 import sys
@@ -17,9 +17,9 @@ def check(name, condition, detail=None):
 
 try:
     sys.path.insert(0, os.path.join(str(rt.getDir(rt.Name("scripts"))), "Zasleh", "python"))
-    import atb_p3d
-    from atb_p3d import meshprep, smoothing
-    from atb_max import bulk, importer
+    from zasleh import formats
+    from zasleh.formats import meshprep, smoothing
+    from zasleh import bulk, importer
 
     importer.define_maxscript()
     check("the helper builds", bulk.available(), bulk.error)
@@ -30,9 +30,9 @@ try:
     map_verts = [(0.1 * i, 0.2 * i, 0.0) for i in range(6)]
     map_tris = [(0, 1, 2), (0, 2, 3), (4, 5, 2)]
     point3 = rt.Point3
-    reference = rt.atbBuildMesh([point3(*v) for v in verts], [point3(a + 1, b + 1, c + 1) for a, b, c in tris],
+    reference = rt.zaslehBuildMesh([point3(*v) for v in verts], [point3(a + 1, b + 1, c + 1) for a, b, c in tris],
                                 [1], [2, 2, 5], [1, 1, 0x80000001 - 0x100000000], "reference")
-    rt.atbSetChannel(reference, 1, [point3(*v) for v in map_verts], [point3(a + 1, b + 1, c + 1) for a, b, c in map_tris])
+    rt.zaslehSetChannel(reference, 1, [point3(*v) for v in map_verts], [point3(a + 1, b + 1, c + 1) for a, b, c in map_tris])
     rt.update(reference)
     node = bulk.new_node("filled")
     flags = array("I", [3 | (1 << 16), 6 | (1 << 16), 7 | (4 << 16)])
@@ -42,10 +42,10 @@ try:
     rt.update(node)
 
     def describe(mesh):
-        rt.execute("global atbBulkTestMesh = undefined")
-        rt.atbBulkTestMesh = mesh
+        rt.execute("global zaslehBulkTestMesh = undefined")
+        rt.zaslehBulkTestMesh = mesh
         return str(rt.execute('''(
-            local m = atbBulkTestMesh
+            local m = zaslehBulkTestMesh
             local s = stringStream ""
             format "v=% f=% " m.numverts m.numfaces to:s
             for i = 1 to m.numverts do format "% " (getVert m i) to:s
@@ -103,14 +103,14 @@ try:
         return ""
 
     # a double-sided quad, a fin on one of its edges (three faces on an edge) and a far tri
-    from atb_p3d import LOD, Face
+    from zasleh.formats import LOD, Face
     lod = LOD(1.0)
     lod.points = [(0, 0, 0), (1, 0, 0), (1, 0, 1), (0, 0, 1), (0.5, 1, 0.5), (5, 0, 0), (6, 0, 0), (6, 0, 1)]
     lod.point_flags = [0] * 8
     lod.normals = [(0.0, 1.0, 0.0)]
     for points in ((0, 1, 2, 3), (3, 2, 1, 0), (0, 1, 4), (5, 6, 7)):
         lod.faces.append(Face.new(points, (0,) * len(points), ((0.0, 0.0),) * len(points), texture="", material=""))
-    lod.taggs.append(atb_p3d.SharpEdges([(0, 1)]))
+    lod.taggs.append(formats.SharpEdges([(0, 1)]))
     check("prepare: a double-sided face with a fin, same as the reference", same(lod) == "", same(lod))
     # more than 32 separately smoothed surfaces at one point: the count of wrongly shaded points too
     fan = LOD(1.0)
@@ -123,7 +123,7 @@ try:
         fan.faces.append(Face.new((b, a, c), (0, 0, 0), ((0.0, 0.0),) * 3, texture="", material=""))
     fan.point_flags = [0] * len(fan.points)
     fan.normals = [(0.0, 1.0, 0.0)]
-    fan.taggs.append(atb_p3d.SharpEdges([]))
+    fan.taggs.append(formats.SharpEdges([]))
     reference_groups, reference_wrong = smoothing.to_smoothing_groups([f.points for f in fan.faces], [])
     fast_groups, fast_wrong = bulk.to_smoothing_groups([f.points for f in fan.faces], [])
     check("smoothing: 40 surfaces at a point, the same groups and the same count of points that cannot be right",
@@ -134,7 +134,7 @@ try:
           smoothing.to_smoothing_groups([(0, 1, 2), (2, 1, 3)], [(7, 9), (-1, 2)]))
 
     # normals and sharp edges for the export: the helper against the Python reference
-    from atb_p3d import normals
+    from zasleh.formats import normals
 
     def same_normals(lod):
         faces = [face.points for face in lod.faces]
@@ -151,18 +151,18 @@ try:
     check("normals: a double-sided face with a fin and a fan of 40 surfaces, same as the reference",
           same_normals(lod) == "" and same_normals(fan) == "", [same_normals(lod), same_normals(fan)])
 
-    sample = os.environ.get("ATB_SAMPLE", "")
+    sample = os.environ.get("ZASLEH_SAMPLE", "")
     if sample and os.path.isfile(sample):
-        model = atb_p3d.read(sample)
-        different = [atb_p3d.lod_name(l.resolution) + ": " + same(l) for l in model.lods if same(l)]
+        model = formats.read(sample)
+        different = [formats.lod_name(l.resolution) + ": " + same(l) for l in model.lods if same(l)]
         check("prepare: every LOD of a real model, same as the reference", not different, different)
-        different = [atb_p3d.lod_name(l.resolution) + ": " + same_normals(l) for l in model.lods
+        different = [formats.lod_name(l.resolution) + ": " + same_normals(l) for l in model.lods
                      if l.faces and same_normals(l)]
         check("normals: every LOD of a real model, same as the reference", not different, different)
 
     # reading an Editable Poly for the export: the helper against MAXScript
-    from atb_max import groups, reader
-    from atb_max import registry as reg
+    from zasleh import groups, reader
+    from zasleh import registry as reg
     rt.resetMaxFile(rt.Name("noPrompt"))
     barrel = rt.convertToPoly(rt.Cylinder(radius=1, height=2, sides=8, heightsegs=2, mapcoords=True, name="barrel"))
     barrel.rotation = rt.EulerAngles(30, 45, 60)
@@ -198,5 +198,5 @@ except Exception as error:  # noqa: BLE001
     out["ok"] = False
     out["error"] = "%s: %s" % (type(error).__name__, error)
     out["trace"] = traceback.format_exc()
-with open(os.environ["ATB_OUT"], "w", encoding="utf-8") as stream:
+with open(os.environ["ZASLEH_OUT"], "w", encoding="utf-8") as stream:
     json.dump(out, stream, indent=1, default=str)

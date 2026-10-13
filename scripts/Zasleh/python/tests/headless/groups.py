@@ -18,10 +18,10 @@ try:
     scripts = str(rt.getDir(rt.Name("scripts")))
     sys.path.insert(0, os.path.join(scripts, "Zasleh", "python"))
 
-    import atb_p3d
-    from atb_p3d import compare
-    from atb_max import exporter, groups, importer, reader, selections
-    from atb_max import registry as reg
+    from zasleh import formats
+    from zasleh.formats import compare
+    from zasleh import exporter, groups, importer, reader, selections
+    from zasleh import registry as reg
 
     rt.resetMaxFile(rt.Name("noPrompt"))
     polyop = rt.polyop
@@ -114,11 +114,11 @@ try:
     # select
     groups.select(plane, registry, "left")
     check("select sets the vertex and polygon selection",
-          {int(i) for i in rt.atbBits(polyop.getVertSelection(plane))} == set(groups.members(plane, registry, "left")[0]) and
-          len(list(rt.atbBits(polyop.getFaceSelection(plane)))) == 6)
+          {int(i) for i in rt.zaslehBits(polyop.getVertSelection(plane))} == set(groups.members(plane, registry, "left")[0]) and
+          len(list(rt.zaslehBits(polyop.getFaceSelection(plane)))) == 6)
 
     def picked_verts(node):
-        return {int(i) for i in rt.atbBits(polyop.getVertSelection(node))}
+        return {int(i) for i in rt.zaslehBits(polyop.getVertSelection(node))}
 
     left_now, ell_now = groups.members(plane, registry, "left")[0], groups.members(plane, registry, "ell")[0]
     groups.select(plane, registry, "ell", "add")
@@ -275,7 +275,7 @@ try:
 
     # check: what modelling does to groups. A strip of two quads: left column "port", right column "star".
     probe = rt.convertToPoly(rt.Plane(length=2, width=2, lengthsegs=2, widthsegs=1, name="probe"))
-    rt.setUserProp(probe, "atb_nosel", True)
+    rt.setUserProp(probe, "zasleh_nosel", True)
     where = {i: polyop.getVert(probe, i) for i in range(1, int(polyop.getNumVerts(probe)) + 1)}
     port = sorted(i for i, p in where.items() if p.x < 0)
     star = sorted(i for i, p in where.items() if p.x > 0)
@@ -350,7 +350,7 @@ try:
 
     # delete: out of every object of the scene; a weighted group gives its slot back
     twin = rt.convertToPoly(rt.Plane(length=2, width=2, lengthsegs=1, widthsegs=1, name="twin"))
-    rt.setUserProp(twin, "atb_nosel", True)
+    rt.setUserProp(twin, "zasleh_nosel", True)
     groups.assign(twin, registry, "port", 1.0, "verts", [1, 2])
     groups.assign(twin, registry, "fade", 0.5, "verts", [1, 2, 3])
     groups.assign(probe, registry, "fade", 0.5, "verts", [1])
@@ -368,7 +368,7 @@ try:
     first = rt.convertToPoly(rt.Box(length=1, width=1, height=1, name="geo"))
     for x in (3, 6):
         polyop.attach(first, rt.convertToPoly(rt.Box(length=1, width=1, height=1, pos=rt.Point3(x, 0, 0))))
-    rt.setUserProp(first, "atb_nosel", True)
+    rt.setUserProp(first, "zasleh_nosel", True)
     geometry = rt.LayerManager.newLayerFromName("Geometry")
     geometry.addNode(first)
     status = groups.find_components(first, registry)
@@ -448,16 +448,16 @@ try:
     # Undo isn't checked here: "max undo" crashes headless 3ds Max even for a plain vert move.
 
     # an imported model: add verts to one of its groups, export, and nothing else may change
-    sample = os.environ.get("ATB_SAMPLE", "")
+    sample = os.environ.get("ZASLEH_SAMPLE", "")
     if sample and os.path.isfile(sample):
         rt.resetMaxFile(rt.Name("noPrompt"))
-        source = atb_p3d.read(sample)
+        source = formats.read(sample)
         result = importer.import_p3d(sample)
         registry = reg.Registry.load()
         before_model, _r = exporter.build_model()
         info = next(row for row in result["lods"] if row.get("selections"))
         layer = rt.LayerManager.getLayerFromName(info["layer"])
-        node = [n for n in rt.atbLayerNodes(layer) if rt.superClassOf(n) == rt.GeometryClass][0]
+        node = [n for n in rt.zaslehLayerNodes(layer) if rt.superClassOf(n) == rt.GeometryClass][0]
         listed = groups.groups_on(node, registry)                  # kept by the importer: no scan
         check("imported model: the kept list is what a scan finds", listed == [n for n in groups.scan(node, registry)
                                                                               if not n.startswith("#")], len(listed or []))
@@ -469,7 +469,7 @@ try:
         registry.save()
         after_model, _r = exporter.build_model()
         differences = compare.diff_models(before_model, after_model)
-        changed = [(atb_p3d.lod_name(res), d) for res, d in differences]
+        changed = [(formats.lod_name(res), d) for res, d in differences]
         only_that = (len(changed) == 1 and set(changed[0][1]) == {"selections_changed"} and
                      [c[0] for c in changed[0][1]["selections_changed"]] == [target])
         check("imported model: editing one group changes that selection only", only_that, str(changed)[:300])
@@ -479,5 +479,5 @@ except Exception as error:  # noqa: BLE001
     out["ok"] = False
     out["error"] = "%s: %s" % (type(error).__name__, error)
     out["trace"] = traceback.format_exc()
-with open(os.environ["ATB_OUT"], "w", encoding="utf-8") as stream:
+with open(os.environ["ZASLEH_OUT"], "w", encoding="utf-8") as stream:
     json.dump(out, stream, indent=1, default=str)

@@ -6,7 +6,7 @@ from typing import Dict, List, Optional, Tuple
 
 import pymxs
 
-import atb_p3d
+from zasleh import formats
 
 from . import registry as reg
 from .groups import GroupError, Patch, define, faces_around, selection_of
@@ -21,7 +21,7 @@ def _points(node, registry: reg.Registry, vertices: List[int], around: List[int]
     entry = registry.get(reg.POINT_ID)
     if entry is not None:
         channel, component = reg.Registry.place(entry["slot"])
-        if rt.atbHasChannel(node, channel):
+        if rt.zaslehHasChannel(node, channel):
             patch = Patch(node, channel, around)
             for vertex, corners in patch.corners_at().items():
                 i, k = corners[0]
@@ -51,7 +51,7 @@ def _slot(registry: reg.Registry) -> Tuple[int, int]:
 def _keeps_mass(node) -> bool:
     """Is the object on a layer whose LOD stores mass?"""
     resolution = layer_resolution(node.layer)
-    return resolution is not None and atb_p3d.has_mass(resolution)
+    return resolution is not None and formats.has_mass(resolution)
 
 
 def set_mass(node, registry: reg.Registry, total: float,
@@ -92,7 +92,7 @@ def get_mass(node, registry: reg.Registry,
     if entry is None:
         return 0.0, len(points)
     channel, component = reg.Registry.place(entry["slot"])
-    if not rt.atbHasChannel(node, channel):
+    if not rt.zaslehHasChannel(node, channel):
         return 0.0, len(points)
     patch = Patch(node, channel, around)
     at = patch.corners_at()

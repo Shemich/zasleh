@@ -14,7 +14,7 @@ Poly, points without faces become point helpers.
 
 | Option | What it does |
 |---|---|
-| Show .paa textures in the viewport | 3ds Max cannot open `.paa`. With this on, a source picture lying next to the `.paa` is shown, or a preview is made from the `.paa` itself (kept in `<Tex root>\temp\atb_preview`). |
+| Show .paa textures in the viewport | 3ds Max cannot open `.paa`. With this on, a source picture lying next to the `.paa` is shown, or a preview is made from the `.paa` itself (kept in `<Tex root>\temp\zasleh_preview`). |
 | Game data | The folder with your unpacked game data. Textures the project does not have (`a3\...`) are looked up there. |
 | Proxies as separate objects | Every proxy triangle becomes its own object named after the proxy. |
 | Split off | Selections whose faces become objects of their own, for example `wheel_*, otocvez`. `*` and `?` are allowed, commas between. A face goes with the first selection that has it. |

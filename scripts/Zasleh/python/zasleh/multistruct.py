@@ -12,8 +12,8 @@ from typing import List, Optional
 
 import pymxs
 
-import atb_p3d
-from atb_p3d import P3D
+from zasleh import formats
+from zasleh.formats import P3D
 
 from . import exporter, mass, memory, reader
 from . import registry as reg
@@ -159,7 +159,7 @@ def geometry_for(name: str) -> list:
         return []
     define_maxscript()
     low = name.lower()
-    return [node for node in rt.atbLayerNodes(layer) if rt.superClassOf(node) == rt.GeometryClass and
+    return [node for node in rt.zaslehLayerNodes(layer) if rt.superClassOf(node) == rt.GeometryClass and
             (str(node.name).lower() == low or str(node.name).lower().startswith(low + "_"))]
 
 
@@ -174,7 +174,7 @@ def _copies(nodes, offset) -> list:
 
 
 def _lod(nodes, resolution: float, props: list, registry, textures, notes, serial: int):
-    layer = rt.LayerManager.newLayerFromName("atb_multistructure_tmp_%d" % serial)
+    layer = rt.LayerManager.newLayerFromName("zasleh_multistructure_tmp_%d" % serial)
     try:
         for node in nodes:
             layer.addNode(node)
@@ -222,11 +222,11 @@ def export_parts(parts: Parts, folder: str, options: Optional[exporter.Options] 
                 serial += 1
                 model.lods.append(_lod(pieces, GEOMETRY, base + parse_props(geometry_props), registry, textures,
                                        report["notes"], serial))
-            atb_p3d.write(model, path)
+            formats.write(model, path)
             done = textures.finish()
             report["notes"] += done.get("texture_notes", [])
             report["ok"].append(name)
-        except (reader.SceneError, atb_p3d.P3DError, OSError) as error:
+        except (reader.SceneError, formats.P3DError, OSError) as error:
             report["failed"].append("%s: %s" % (name, error))
     rt.redrawViews()
     return report

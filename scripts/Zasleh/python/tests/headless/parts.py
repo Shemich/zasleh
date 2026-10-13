@@ -1,4 +1,4 @@
-"""Selections split off into objects (atb_max/parts.py), in headless 3ds Max: the scene, and the p3d it gives back"""
+"""Selections split off into objects (zasleh/parts.py), in headless 3ds Max: the scene, and the p3d it gives back"""
 import json
 import os
 import sys
@@ -16,10 +16,10 @@ def check(name, condition, detail=None):
 
 try:
     sys.path.insert(0, os.path.join(str(rt.getDir(rt.Name("scripts"))), "Zasleh", "python"))
-    import atb_p3d
-    from atb_p3d import LOD, Face, P3D, Selection, compare
-    from atb_max import exporter, groups, importer, parts
-    from atb_max import registry as reg
+    from zasleh import formats
+    from zasleh.formats import LOD, Face, P3D, Selection, compare
+    from zasleh import exporter, groups, importer, parts
+    from zasleh import registry as reg
 
     check("patterns: typed ones after the one for proxies",
           parts.patterns_of(" wheel_*; otocvez ,", True) == ["proxy:*", "wheel_*", "otocvez"] and parts.patterns_of("") == [])
@@ -28,7 +28,7 @@ try:
           ["proxy:a.001", "Wheel_1", "wheel_2"])
 
     # a strip of four quads, a proxy triangle apart from it; "left" and "middle" share a quad, "soft" has weights
-    work = os.path.join(os.environ["ATB_TMP"], "atb_parts_test")
+    work = os.path.join(os.environ["ZASLEH_TMP"], "zasleh_parts_test")
     os.makedirs(work, exist_ok=True)
     lod = LOD(1.0)
     lod.points = [(float(x), 0.0, float(z)) for x in range(5) for z in (0, 1)] + [(9.0, 0.0, 0.0), (9.0, 1.0, 0.0), (9.0, 0.0, 1.0)]
@@ -51,15 +51,15 @@ try:
 
     lod.taggs += [selection("left", [0, 1]), selection("middle", [1, 2]), selection("soft", [3], 128),
                   selection("proxy:\\a3\\x\\driver.001", [4]), selection("all", [0, 1, 2, 3, 4])]
-    lod.taggs.append(atb_p3d.SharpEdges([]))
+    lod.taggs.append(formats.SharpEdges([]))
     source = os.path.join(work, "strip.p3d")
     model = P3D()
     model.lods.append(lod)
-    atb_p3d.write(model, source)
+    formats.write(model, source)
 
     def written():
         built, _report = exporter.build_model()
-        return atb_p3d.loads(atb_p3d.dumps(built))
+        return formats.loads(formats.dumps(built))
 
     def round_trip(patterns):
         """Import, write, split, write again: what the split changed in the p3d"""
@@ -105,7 +105,7 @@ try:
           names == ["left", "middle", "proxy:\\a3\\x\\driver.001", "soft"] and not differences, [made, names, differences])
 
     # a skeleton laid out in the scene: bone objects, linked like the bones
-    from atb_max import skeleton
+    from zasleh import skeleton
     rt.resetMaxFile(rt.Name("noPrompt"))
     importer.import_p3d(source)
     whole = written()
@@ -121,7 +121,7 @@ try:
           not compare.diff_models(whole, written()), skeleton.bones_from_links())
     check("laying it out again changes nothing", parts.by_bones([("left", ""), ("middle", "left"), ("soft", "middle")]) == ({}, 0))
 
-    sample = os.environ.get("ATB_SAMPLE", "")
+    sample = os.environ.get("ZASLEH_SAMPLE", "")
     if sample and os.path.isfile(sample):
         rt.resetMaxFile(rt.Name("noPrompt"))
         report = importer.import_p3d(sample)
@@ -136,5 +136,5 @@ except Exception as error:  # noqa: BLE001
     out["ok"] = False
     out["error"] = "%s: %s" % (type(error).__name__, error)
     out["trace"] = traceback.format_exc()
-with open(os.environ["ATB_OUT"], "w", encoding="utf-8") as stream:
+with open(os.environ["ZASLEH_OUT"], "w", encoding="utf-8") as stream:
     json.dump(out, stream, indent=1, default=str)

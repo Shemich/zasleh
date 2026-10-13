@@ -4,8 +4,8 @@ import shutil
 import pymxs
 from PySide2 import QtCore, QtWidgets
 
-import atb_p3d
-from atb_p3d import odol
+from zasleh import formats
+from zasleh.formats import odol
 
 from .. import exporter, importer, lodtools, parts, prep, reader, settings
 
@@ -251,7 +251,7 @@ class ModelTab(QtWidgets.QWidget):
             if binarized:
                 path = odol.to_mlod(path, self.debinarizer.text(), work)
             report = importer.import_p3d(path)
-        except (atb_p3d.P3DError, OSError) as error:
+        except (formats.P3DError, OSError) as error:
             self.say("Import failed: %s" % error)
             return False
         finally:
@@ -279,7 +279,7 @@ class ModelTab(QtWidgets.QWidget):
             return False
         try:
             report = exporter.export_p3d(path, layers, self.options())
-        except (reader.SceneError, atb_p3d.P3DError, OSError) as error:
+        except (reader.SceneError, formats.P3DError, OSError) as error:
             self.say("Export failed: %s" % error)
             return False
         self.say(exporter.summary(report))

@@ -34,17 +34,22 @@
 ## Разработчикам
 
 ```
-scripts/Zasleh/python/atb_p3d    форматы, 3ds Max не нужен: p3d, paa, rvmat, model.cfg
-scripts/Zasleh/python/atb_max    сцена: импорт, экспорт, selections, материалы...
-scripts/Zasleh/python/atb_max/ui панель на Qt, по файлу на вкладку
-scripts/Zasleh/python/tests      юнит-тесты и проверки, идущие внутри 3ds Max без интерфейса
-docs/                            сайт документации
+scripts/Zasleh/python/zasleh/formats  форматы, 3ds Max не нужен: p3d, paa, rvmat, model.cfg
+scripts/Zasleh/python/zasleh          сцена: импорт, экспорт, selections, материалы...
+scripts/Zasleh/python/zasleh/ui       панель на Qt, по файлу на вкладку
+scripts/Zasleh/python/tests           юнит-тесты и проверки, идущие внутри 3ds Max без интерфейса
+docs/                                 сайт документации
 ```
 
     cd scripts\Zasleh\python
     python -m unittest discover -s tests -t .
-    python -m atb_p3d info model.p3d
-    python -m atb_p3d diff a.p3d b.p3d
+    python -m zasleh.formats info model.p3d
+    python -m zasleh.formats diff a.p3d b.p3d
+
+## Лицензия
+
+Copyright (C) 2026 Shemich. Zasleh — свободная программа под GNU General Public License v3.0:
+ею можно пользоваться, менять её и делиться ею, а сделанное на её основе тоже должно оставаться открытым. См. [LICENSE](LICENSE).
 
 ## Спасибо
 
